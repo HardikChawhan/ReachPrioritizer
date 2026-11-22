@@ -1,0 +1,177 @@
+{
+  "timestamp": "2026-10-01T06:14:10.699Z",
+  "total_records": 21901,
+  "with_source": 21901,
+  "no_source": 0,
+  "parse_success": 21766,
+  "parse_failure": 135,
+  "parse_success_rate": 0.9938358979042052,
+  "error_buckets": {
+    "Missing": 69,
+    "Unexpected": 48,
+    "Did": 16,
+    "Private": 2
+  },
+  "failure_samples": [
+    {
+      "sample_id": "51dd909d1b8349db",
+      "organisation": "actions",
+      "project": "http-client",
+      "function_name": "_prepareRequest",
+      "error": "Missing semicolon. (1:7)",
+      "source_preview": "private _prepareRequest(method: string, requestUrl: url.Url, headers: ifm.IHeaders): ifm.IRequestInfo {\r     const info: ifm.IRequestInfo = <ifm.IRequ"
+    },
+    {
+      "sample_id": "25e51b504b2f6811",
+      "organisation": "arduino",
+      "project": "arduino-ide",
+      "function_name": "render",
+      "error": "Missing semicolon. (1:8)",
+      "source_preview": "override render(): React.ReactNode {\r     const {\r         messageId,\r         message,\r         type,\r         collapsed,\r         expandable,\r      "
+    },
+    {
+      "sample_id": "3108a7841b4a1454",
+      "organisation": "arduino",
+      "project": "arduino-ide",
+      "function_name": "render",
+      "error": "Missing semicolon. (1:8)",
+      "source_preview": "override render(): React.ReactNode {\r     const {\r         messageId,\r         message,\r         type,\r         collapsed,\r         expandable,\r      "
+    },
+    {
+      "sample_id": "a95080485b6d0c3a",
+      "organisation": "ariabuckles",
+      "project": "simple-markdown",
+      "function_name": "htmlTag",
+      "error": "Unexpected token (1:8)",
+      "source_preview": "function(\r     tagName: string,\r     content: string,\r     attributes: ?{ [any]: ?Attr },\r     isClosed: ?boolean\r ) {\r     attributes = attributes ||"
+    },
+    {
+      "sample_id": "533c4be504162005",
+      "organisation": "ariabuckles",
+      "project": "simple-markdown",
+      "function_name": "parse",
+      "error": "Unexpected token (1:8)",
+      "source_preview": "function(capture, parse, state) {\r     const bullet = capture[2];\r     const ordered = bullet.length > 1;\r     const start = ordered ? +bullet : undef"
+    },
+    {
+      "sample_id": "d609df06743a0961",
+      "organisation": "ariabuckles",
+      "project": "simple-markdown",
+      "function_name": "populateInitialState",
+      "error": "Unexpected token (1:8)",
+      "source_preview": "function(givenState: ?State, defaultState: ?State): State {\r     const state: State = givenState || {};\r \r     if (defaultState != null) {\r         fo"
+    },
+    {
+      "sample_id": "205f974d8d1d197a",
+      "organisation": "ariabuckles",
+      "project": "simple-markdown",
+      "function_name": "parserFor",
+      "error": "Unexpected token (1:8)",
+      "source_preview": "function(rules: ParserRules, defaultState: ?State) {\r     const ruleList = Object.keys(rules).filter(function(type) {\r         const rule = rules[type"
+    },
+    {
+      "sample_id": "3d8e068213d42d61",
+      "organisation": "ariabuckles",
+      "project": "simple-markdown",
+      "function_name": "reactElement",
+      "error": "Unexpected token (1:8)",
+      "source_preview": "function(type: string, key: string | null, props: { [string]: any }) {\r     const element = {\r         $$typeof: TYPE_SYMBOL,\r         type: type,\r   "
+    },
+    {
+      "sample_id": "4090e85d54f4300f",
+      "organisation": "ariabuckles",
+      "project": "simple-markdown",
+      "function_name": "sanitizeUrl",
+      "error": "Unexpected token (1:8)",
+      "source_preview": "function(url: ?string) {\r     if (url == null) {\r         return null;\r     }\r \r     try {\r         const prot = decodeURIComponent(url).replace(/[^A-"
+    },
+    {
+      "sample_id": "50679ec885ef9999",
+      "organisation": "ariabuckles",
+      "project": "simple-markdown",
+      "function_name": "ruleOutput",
+      "error": "Unexpected token (1:8)",
+      "source_preview": "function<Rule: Object>(rules: OutputRules<Rule>, property: $Keys<Rule>) {\r     if (!property && typeof console !== \"undefined\") {\r         console.war"
+    },
+    {
+      "sample_id": "514fc1d5d285a2ff",
+      "organisation": "ariabuckles",
+      "project": "simple-markdown",
+      "function_name": "outputFor",
+      "error": "Unexpected token (1:8)",
+      "source_preview": "function<Rule: Object>(rules: OutputRules<Rule>, property: $Keys<Rule>, defaultState: ?State) {\r     if (!property) {\r         throw new Error(\r      "
+    },
+    {
+      "sample_id": "aaa722e7aa385a56",
+      "organisation": "ariabuckles",
+      "project": "simple-markdown",
+      "function_name": "sanitizeUrl",
+      "error": "Unexpected token (1:8)",
+      "source_preview": "function(url: ?string) {\r     if (url == null) {\r         return null;\r     }\r \r     try {\r         const prot = decodeURIComponent(url).replace(/[^A-"
+    },
+    {
+      "sample_id": "eeb44e3819bb4877",
+      "organisation": "backstage",
+      "project": "backstage",
+      "function_name": "addRedactions",
+      "error": "Did not expect a type annotation here. (1:24)",
+      "source_preview": "addRedactions(redactions: Iterable<string>) {\r     this.#addRedactions?.(redactions);\r }"
+    },
+    {
+      "sample_id": "03820af2ab95f514",
+      "organisation": "backstage",
+      "project": "backstage",
+      "function_name": "child",
+      "error": "Did not expect a type annotation here. (1:10)",
+      "source_preview": "child(meta: JsonObject): LoggerService {\r     return new WinstonLogger(this.#winston.child(meta));\r }"
+    },
+    {
+      "sample_id": "70915686214fca7a",
+      "organisation": "backstage",
+      "project": "backstage",
+      "function_name": "debug",
+      "error": "Unexpected token (1:27)",
+      "source_preview": "debug(message: string, meta?: JsonObject): void {\r     this.#winston.debug(message, meta);\r }"
+    },
+    {
+      "sample_id": "606ada6c6bb8dce5",
+      "organisation": "backstage",
+      "project": "backstage",
+      "function_name": "error",
+      "error": "Unexpected token (1:27)",
+      "source_preview": "error(message: string, meta?: JsonObject): void {\r     this.#winston.error(message, meta);\r }"
+    },
+    {
+      "sample_id": "4f8ef1b1a8e3af37",
+      "organisation": "backstage",
+      "project": "backstage",
+      "function_name": "info",
+      "error": "Unexpected token (1:26)",
+      "source_preview": "info(message: string, meta?: JsonObject): void {\r     this.#winston.info(message, meta);\r }"
+    },
+    {
+      "sample_id": "5ac50dabeef6aa47",
+      "organisation": "backstage",
+      "project": "backstage",
+      "function_name": "constructor",
+      "error": "Missing semicolon. (1:7)",
+      "source_preview": "private constructor(winston: Logger, addRedactions?: (redactions: Iterable<string>) => void) {\r     this.#winston = winston;\r     this.#addRedactions "
+    },
+    {
+      "sample_id": "34fc6e49ea75e34d",
+      "organisation": "backstage",
+      "project": "backstage",
+      "function_name": "warn",
+      "error": "Unexpected token (1:26)",
+      "source_preview": "warn(message: string, meta?: JsonObject): void {\r     this.#winston.warn(message, meta);\r }"
+    },
+    {
+      "sample_id": "16e4586a4c107bb8",
+      "organisation": "capricorn86",
+      "project": "happy-dom",
+      "function_name": null,
+      "error": "Private name #workerPool is not defined. (2:13)",
+      "source_preview": "(resolve, reject) => {\r     if (this.#workerPool.free.length === 0) {\r         const maxConcurrency = configuration.inspect ? 1 : configuration.worker"
+    }
+  ]
+}

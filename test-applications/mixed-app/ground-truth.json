@@ -1,0 +1,95 @@
+{
+  "application": "mixed-app",
+  "description": "Controlled mixed application with reachable and unreachable vulnerable and secure functions",
+  "schema": "reachprioritizer-ground-truth/v2",
+  "reachability_definition": "is_reachable = the function can be executed while serving an attacker request (reachable from an active route / request handler). Code that only runs at startup or is never wired up counts as NOT reachable.",
+  "entry_points": [
+    "src/server.js"
+  ],
+  "functions": [
+    {
+      "file": "src/services/activeService.js",
+      "function": "processCommand",
+      "is_vulnerable": true,
+      "cwe": "CWE-78",
+      "is_reachable": true,
+      "note": "Command injection; GET /api/process -> handleProcess -> processCommand"
+    },
+    {
+      "file": "src/services/activeService.js",
+      "function": "fetchExternalReport",
+      "is_vulnerable": true,
+      "cwe": "CWE-918",
+      "is_reachable": false,
+      "note": "SSRF; only called by handleFetch, which is exported but never registered as a route"
+    },
+    {
+      "file": "src/legacy/legacyProcessor.js",
+      "function": "processBatchSql",
+      "is_vulnerable": true,
+      "cwe": "CWE-89",
+      "is_reachable": false,
+      "note": "SQL injection in a module that is never imported"
+    },
+    {
+      "file": "src/legacy/legacyProcessor.js",
+      "function": "exportLegacyBackup",
+      "is_vulnerable": true,
+      "cwe": "CWE-78",
+      "is_reachable": false,
+      "note": "Command injection in a module that is never imported"
+    },
+    {
+      "file": "src/legacy/legacyProcessor.js",
+      "function": "legacyAuth",
+      "is_vulnerable": true,
+      "cwe": "CWE-89",
+      "is_reachable": false,
+      "note": "SQL string built from parameters in a module that is never imported"
+    },
+    {
+      "file": "src/utils/safeHelper.js",
+      "function": "formatOutput",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": true,
+      "note": "HTML-encodes output; called by handleProcess"
+    },
+    {
+      "file": "src/utils/safeHelper.js",
+      "function": "computeSystemStats",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": true,
+      "note": "Static telemetry; called by handleStats"
+    },
+    {
+      "file": "src/utils/safeHelper.js",
+      "function": "sanitizeString",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": false,
+      "note": "Imported by apiController but never called"
+    },
+    {
+      "file": "src/utils/archivedUtil.js",
+      "function": "oldFormat",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": false,
+      "note": "Never imported"
+    },
+    {
+      "file": "src/utils/archivedUtil.js",
+      "function": "archiveLegacyData",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": false,
+      "note": "Never imported"
+    }
+  ],
+  "corrections_from_v1": [
+    "fetchExternalReport: v1 said reachable, but its only caller handleFetch is never registered as a route (api.js registers /api/process and /api/stats only)",
+    "sanitizeString: v1 said reachable, but it is imported and never called"
+  ]
+}

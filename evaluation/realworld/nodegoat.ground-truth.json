@@ -1,0 +1,50 @@
+{
+  "application": "NodeGoat",
+  "repository": "https://github.com/OWASP/NodeGoat",
+  "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+  "schema": "reachprioritizer-ground-truth/v2",
+  "scope": "Only code-level vulnerabilities that a static source analyzer can be expected to find are listed (template-level XSS, access-control and configuration issues are out of scope). Labels taken from the project's own documentation / tutorial and verified by reading the code.",
+  "functions": [
+    {
+      "file": "app/routes/contributions.js",
+      "function": "ContributionsHandler.handleContributionsUpdate",
+      "is_vulnerable": true,
+      "cwe": "CWE-94",
+      "is_reachable": true,
+      "note": "A1 Server-side JS injection: eval(req.body.preTax)"
+    },
+    {
+      "file": "app/data/allocations-dao.js",
+      "function": "searchCriteria",
+      "is_vulnerable": true,
+      "cwe": "CWE-943",
+      "is_reachable": true,
+      "note": "A1 NoSQL injection via $where with the threshold query parameter"
+    },
+    {
+      "file": "app/routes/research.js",
+      "function": "ResearchHandler.displayResearch",
+      "is_vulnerable": true,
+      "cwe": "CWE-918",
+      "is_reachable": true,
+      "note": "SSRF: needle.get on user-supplied url"
+    },
+    {
+      "file": "app/routes/index.js",
+      "function": "<GET /learn handler>",
+      "is_vulnerable": true,
+      "cwe": "CWE-601",
+      "is_reachable": true,
+      "note": "A10 Unvalidated redirect (/learn?url=)",
+      "line": 72
+    },
+    {
+      "file": "app/routes/profile.js",
+      "function": "ProfileHandler.handleProfileUpdate",
+      "is_vulnerable": true,
+      "cwe": "CWE-1333",
+      "is_reachable": true,
+      "note": "ReDoS: /([0-9]+)+\\#/ applied to bankRouting"
+    }
+  ]
+}

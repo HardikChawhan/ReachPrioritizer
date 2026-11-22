@@ -1,0 +1,8 @@
+{
+  "name": "express-app",
+  "version": "1.0.0",
+  "description": "Realistic Express-style test application for ReachPrioritizer (routers, classes, dead routes, sanitizers)",
+  "main": "src/app.js",
+  "scripts": { "start": "node src/app.js" },
+  "dependencies": { "express": "^4.19.2", "axios": "^1.7.0" }
+}

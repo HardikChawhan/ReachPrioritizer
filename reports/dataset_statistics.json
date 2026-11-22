@@ -1,0 +1,297 @@
+{
+  "generated_at": "2026-10-01T06:14:18.062Z",
+  "total_samples": 21896,
+  "label_dist": {
+    "vulnerable": 2039,
+    "benign": 19857,
+    "vuln_fraction": 0.09312203142126416
+  },
+  "parse_stats": {
+    "success": 21761,
+    "failure": 135,
+    "no_source": 0,
+    "success_rate": 0.9938344903178663
+  },
+  "duplicate_stats": {
+    "raw_duplicate_records": 0,
+    "norm_duplicate_records": 0
+  },
+  "source_length_dist": {
+    "min": 10,
+    "max": 1773624,
+    "mean": 2448.518633540373,
+    "median": 413,
+    "p25": 168,
+    "p75": 1061,
+    "p95": 6763
+  },
+  "line_count_dist": {
+    "min": 1,
+    "max": 45728,
+    "mean": 72.12285348922178,
+    "median": 15,
+    "p25": 6,
+    "p75": 35,
+    "p95": 196
+  },
+  "repository_count": 1164,
+  "samples_per_repo": {
+    "min": 1,
+    "max": 959,
+    "mean": 18.810996563573884,
+    "median": 6
+  },
+  "top_repositories": [
+    {
+      "key": "totaljs/framework",
+      "count": 959
+    },
+    {
+      "key": "misp/misp",
+      "count": 585
+    },
+    {
+      "key": "phpmyadmin/phpmyadmin",
+      "count": 568
+    },
+    {
+      "key": "amauric/tarteaucitron.js",
+      "count": 472
+    },
+    {
+      "key": "matrix-org/matrix-js-sdk",
+      "count": 390
+    },
+    {
+      "key": "pimcore/pimcore",
+      "count": 381
+    },
+    {
+      "key": "zimbra/zm-ajax",
+      "count": 344
+    },
+    {
+      "key": "alinto/sogo",
+      "count": 249
+    },
+    {
+      "key": "sequelize/sequelize",
+      "count": 244
+    },
+    {
+      "key": "vercel/next.js",
+      "count": 217
+    },
+    {
+      "key": "parse-community/parse-server",
+      "count": 214
+    },
+    {
+      "key": "wwbn/avideo",
+      "count": 199
+    },
+    {
+      "key": "automattic/mongoose",
+      "count": 184
+    },
+    {
+      "key": "freescout-help-desk/freescout",
+      "count": 183
+    },
+    {
+      "key": "angular/angular.js",
+      "count": 180
+    },
+    {
+      "key": "sulu/sulu",
+      "count": 173
+    },
+    {
+      "key": "horde/kronolith",
+      "count": 155
+    },
+    {
+      "key": "matrix-org/matrix-appservice-irc",
+      "count": 150
+    },
+    {
+      "key": "nocodb/nocodb",
+      "count": 146
+    },
+    {
+      "key": "mintplex-labs/anything-llm",
+      "count": 140
+    }
+  ],
+  "cwe_distribution": [
+    {
+      "key": "CWE-79",
+      "count": 6794
+    },
+    {
+      "key": "CWE-1321",
+      "count": 1983
+    },
+    {
+      "key": "CWE-22",
+      "count": 1365
+    },
+    {
+      "key": "CWE-400",
+      "count": 1190
+    },
+    {
+      "key": "CWE-20",
+      "count": 957
+    },
+    {
+      "key": "CWE-1333",
+      "count": 820
+    },
+    {
+      "key": "CWE-78",
+      "count": 775
+    },
+    {
+      "key": "CWE-200",
+      "count": 643
+    },
+    {
+      "key": "CWE-94",
+      "count": 619
+    },
+    {
+      "key": "CWE-89",
+      "count": 554
+    },
+    {
+      "key": "CWE-674",
+      "count": 460
+    },
+    {
+      "key": "CWE-352",
+      "count": 429
+    },
+    {
+      "key": "CWE-287",
+      "count": 402
+    },
+    {
+      "key": "CWE-1021",
+      "count": 396
+    },
+    {
+      "key": "CWE-284",
+      "count": 396
+    },
+    {
+      "key": "CWE-116",
+      "count": 347
+    },
+    {
+      "key": "CWE-77",
+      "count": 309
+    },
+    {
+      "key": "CWE-74",
+      "count": 295
+    },
+    {
+      "key": "CWE-347",
+      "count": 259
+    },
+    {
+      "key": "CWE-601",
+      "count": 242
+    }
+  ],
+  "cve_distribution": [
+    {
+      "key": "CVE-2019-8903",
+      "count": 596
+    },
+    {
+      "key": "CVE-2025-31138",
+      "count": 389
+    },
+    {
+      "key": "CVE-2024-42369",
+      "count": 378
+    },
+    {
+      "key": "CVE-2017-20188",
+      "count": 344
+    },
+    {
+      "key": "CVE-2020-28495",
+      "count": 303
+    },
+    {
+      "key": "CVE-2014-9905",
+      "count": 245
+    },
+    {
+      "key": "CVE-2023-25314",
+      "count": 199
+    },
+    {
+      "key": "CVE-2021-41169",
+      "count": 173
+    },
+    {
+      "key": "CVE-2024-34698",
+      "count": 172
+    },
+    {
+      "key": "CVE-2017-16908",
+      "count": 155
+    }
+  ],
+  "node_type_distribution": [
+    {
+      "key": "FunctionExpression",
+      "count": 7994
+    },
+    {
+      "key": "FunctionDeclaration",
+      "count": 7162
+    },
+    {
+      "key": "ClassMethod",
+      "count": 4174
+    },
+    {
+      "key": "ArrowFunctionExpression",
+      "count": 1864
+    },
+    {
+      "key": "ObjectMethod",
+      "count": 702
+    }
+  ],
+  "unique_cwes": 183,
+  "unique_cves": 1769,
+  "splits": {
+    "train": {
+      "total": 17621,
+      "vulnerable": 1567,
+      "benign": 16054,
+      "vuln_pct": "8.9"
+    },
+    "validation": {
+      "total": 2194,
+      "vulnerable": 229,
+      "benign": 1965,
+      "vuln_pct": "10.4"
+    },
+    "test": {
+      "total": 2081,
+      "vulnerable": 243,
+      "benign": 1838,
+      "vuln_pct": "11.7"
+    },
+    "train_repos": 917,
+    "val_repos": 108,
+    "test_repos": 139
+  }
+}

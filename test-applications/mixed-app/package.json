@@ -1,0 +1,9 @@
+{
+  "name": "mixed-app",
+  "version": "1.0.0",
+  "description": "Mixed application with reachable and unreachable vulnerable and secure functions for ReachPrioritizer validation",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  }
+}

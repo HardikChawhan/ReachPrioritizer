@@ -1,0 +1,27 @@
+{
+  "name": "reachprioritizer",
+  "version": "2.0.0",
+  "description": "ReachPrioritizer \u2014 reachability- and taint-aware, AI-assisted vulnerability prioritization for JavaScript / TypeScript / Node.js",
+  "main": "analyzer/analyze.js",
+  "scripts": {
+    "analyze": "node analyzer/analyze.js --pretty --project",
+    "test:analyzer": "node --test analyzer/test/engine.test.js",
+    "phase1": "node preprocessing/run_phase1.js",
+    "inspect": "node preprocessing/inspect_schema.js",
+    "inventory": "node preprocessing/inventory.js",
+    "normalize": "node preprocessing/normalize.js",
+    "validate": "node preprocessing/validate_js.js",
+    "deduplicate": "node preprocessing/deduplicate.js",
+    "leakage": "node preprocessing/leakage_check.js",
+    "split": "node preprocessing/split.js",
+    "stats": "node preprocessing/statistics.js"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.29.15",
+    "minimist": "^1.2.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}

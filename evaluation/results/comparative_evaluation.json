@@ -1,0 +1,2515 @@
+{
+  "generated_at": "2026-11-22T14:46:26.807291+00:00",
+  "description": "Comparative evaluation of detection, reachability and prioritization (produced by evaluation/scripts/run_experiments.py)",
+  "environment": {
+    "model": "tfidf_logreg",
+    "model_display": "TF-IDF + Logistic Regression",
+    "threshold": 0.5,
+    "model_test_metrics": {
+      "accuracy": 0.7438731379144642,
+      "precision": 0.2762345679012346,
+      "recall": 0.7366255144032922,
+      "f1": 0.40179573512906847,
+      "roc_auc": 0.8059664064983857,
+      "confusion_matrix": [
+        [
+          1369,
+          469
+        ],
+        [
+          64,
+          179
+        ]
+      ],
+      "num_test_samples": 2081,
+      "num_vuln_test": 243
+    },
+    "python": "3.13.18",
+    "eslint_baseline": true
+  },
+  "relevance_definition": "A candidate is relevant (exploitable) when ground truth marks the function vulnerable AND reachable from an active request entry point.",
+  "summary": {
+    "detection_controlled_pooled": {
+      "reachprioritizer_taint": {
+        "tp": 22,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tn": 21,
+        "accuracy": 1.0
+      },
+      "ai_only_classifier": {
+        "tp": 8,
+        "fp": 7,
+        "fn": 14,
+        "precision": 0.5333,
+        "recall": 0.3636,
+        "f1": 0.4324,
+        "tn": 14,
+        "accuracy": 0.5116
+      },
+      "v1_regex_rules": {
+        "tp": 8,
+        "fp": 1,
+        "fn": 14,
+        "precision": 0.8889,
+        "recall": 0.3636,
+        "f1": 0.5161,
+        "tn": 20,
+        "accuracy": 0.6512
+      },
+      "eslint_plugin_security": {
+        "tp": 5,
+        "fp": 3,
+        "fn": 17,
+        "precision": 0.625,
+        "recall": 0.2273,
+        "f1": 0.3333,
+        "tn": 18,
+        "accuracy": 0.5349
+      }
+    },
+    "detection_realworld_recall": {
+      "reachprioritizer_taint": 1.0,
+      "ai_only_classifier": 0.7273,
+      "v1_regex_rules": 0.5455,
+      "eslint_plugin_security": 0.1818
+    },
+    "reachability_pooled": {
+      "tp": 38,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tn": 16,
+      "accuracy": 1.0
+    },
+    "prioritization_mean": {
+      "E0_severity_only": {
+        "precision_at_1": 0.6,
+        "precision_at_3": 0.7333,
+        "precision_at_5": 0.76,
+        "ndcg_at_5": 0.8156,
+        "ndcg_at_10": 0.8648,
+        "average_precision": 0.8131,
+        "name": "Severity only (classic SAST)"
+      },
+      "E1_ai_only": {
+        "precision_at_1": 0.2,
+        "precision_at_3": 0.2,
+        "precision_at_5": 0.16,
+        "ndcg_at_5": 0.1708,
+        "ndcg_at_10": 0.3876,
+        "average_precision": 0.3222,
+        "name": "AI probability only"
+      },
+      "E2_ai_severity": {
+        "precision_at_1": 0.8,
+        "precision_at_3": 0.6667,
+        "precision_at_5": 0.64,
+        "ndcg_at_5": 0.7571,
+        "ndcg_at_10": 0.8486,
+        "average_precision": 0.7532,
+        "name": "AI + severity"
+      },
+      "E3_ai_reachability": {
+        "precision_at_1": 0.2,
+        "precision_at_3": 0.3333,
+        "precision_at_5": 0.4,
+        "ndcg_at_5": 0.4418,
+        "ndcg_at_10": 0.587,
+        "average_precision": 0.4984,
+        "name": "AI + reachability"
+      },
+      "E4_ai_severity_reachability": {
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.8667,
+        "precision_at_5": 0.76,
+        "ndcg_at_5": 0.9475,
+        "ndcg_at_10": 0.9911,
+        "average_precision": 0.9718,
+        "name": "AI + severity + reachability (v1 formula)"
+      },
+      "E5_reachprioritizer": {
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.8667,
+        "precision_at_5": 0.84,
+        "ndcg_at_5": 1.0,
+        "ndcg_at_10": 1.0,
+        "average_precision": 1.0,
+        "name": "Full ReachPrioritizer (severity + taint + AI + reachability)"
+      }
+    }
+  },
+  "controlled": [
+    {
+      "application": "vulnerable-app",
+      "files": 6,
+      "functions": 24,
+      "edges": 23,
+      "analysis_seconds": 0.1,
+      "labeled_functions": 9,
+      "labeled_vulnerable": 8,
+      "exploitable": 6,
+      "missing_ground_truth_functions": [],
+      "detection": {
+        "reachprioritizer_taint": {
+          "tp": 8,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tn": 1,
+          "accuracy": 1.0,
+          "flagged_functions": 8,
+          "flagged_unlabeled": 0
+        },
+        "ai_only_classifier": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 5,
+          "precision": 1.0,
+          "recall": 0.375,
+          "f1": 0.5455,
+          "tn": 1,
+          "accuracy": 0.4444,
+          "flagged_functions": 5,
+          "flagged_unlabeled": 2
+        },
+        "v1_regex_rules": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 5,
+          "precision": 1.0,
+          "recall": 0.375,
+          "f1": 0.5455,
+          "tn": 1,
+          "accuracy": 0.4444,
+          "flagged_functions": 4,
+          "flagged_unlabeled": 1
+        },
+        "eslint_plugin_security": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 5,
+          "precision": 1.0,
+          "recall": 0.375,
+          "f1": 0.5455,
+          "tn": 1,
+          "accuracy": 0.4444,
+          "flagged_functions": 4,
+          "flagged_unlabeled": 1
+        }
+      },
+      "reachability": {
+        "tp": 7,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tn": 2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      "prioritization": {
+        "E0_severity_only": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 1.0,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 10,
+          "relevant": 6,
+          "name": "Severity only (classic SAST)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 1.0,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 1.0,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.8,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "src/controllers/userController.js::authenticateUser",
+              "score": 0.8,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/controllers/userController.js::getUserById",
+              "score": 0.8,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E1_ai_only": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.3333,
+          "precision_at_5": 0.4,
+          "ndcg_at_5": 0.3008,
+          "ndcg_at_10": 0.6433,
+          "average_precision": 0.4696,
+          "first_relevant_rank": 3,
+          "candidates": 10,
+          "relevant": 6,
+          "name": "AI probability only",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/server.js::<createServer callback:L24>",
+              "score": 0.773,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "src/routes/users.js::parseData",
+              "score": 0.7166,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 0.7087,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "src/utils/serialize.js::mergeConfig",
+              "score": 0.683,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "parameter"
+            },
+            {
+              "rank": 5,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.6804,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E2_ai_severity": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 0.6667,
+          "precision_at_5": 0.8,
+          "ndcg_at_5": 0.8304,
+          "ndcg_at_10": 0.9275,
+          "average_precision": 0.8069,
+          "first_relevant_rank": 1,
+          "candidates": 10,
+          "relevant": 6,
+          "name": "AI + severity",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 0.8544,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.8402,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/utils/serialize.js::mergeConfig",
+              "score": 0.7415,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "parameter"
+            },
+            {
+              "rank": 4,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.5796,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/controllers/userController.js::getUserById",
+              "score": 0.565,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E3_ai_reachability": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.3333,
+          "precision_at_5": 0.6,
+          "ndcg_at_5": 0.4469,
+          "ndcg_at_10": 0.693,
+          "average_precision": 0.5653,
+          "first_relevant_rank": 3,
+          "candidates": 10,
+          "relevant": 6,
+          "name": "AI + reachability",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/server.js::<createServer callback:L24>",
+              "score": 0.773,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "src/routes/users.js::parseData",
+              "score": 0.7166,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 0.7087,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.6804,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.3593,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E4_ai_severity_reachability": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 0.8,
+          "ndcg_at_5": 0.8688,
+          "ndcg_at_10": 0.9715,
+          "average_precision": 0.9107,
+          "first_relevant_rank": 1,
+          "candidates": 10,
+          "relevant": 6,
+          "name": "AI + severity + reachability (v1 formula)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 0.8544,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.8402,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.5796,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "src/controllers/userController.js::getUserById",
+              "score": 0.565,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/server.js::<createServer callback:L24>",
+              "score": 0.5365,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E5_reachprioritizer": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 1.0,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 10,
+          "relevant": 6,
+          "name": "Full ReachPrioritizer (severity + taint + AI + reachability)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 0.9417,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.9361,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.7819,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "src/controllers/userController.js::getUserById",
+              "score": 0.776,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/controllers/userController.js::authenticateUser",
+              "score": 0.7519,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        }
+      },
+      "findings_total": 8,
+      "findings_reachable_user_input": 6
+    },
+    {
+      "application": "secure-app",
+      "files": 6,
+      "functions": 25,
+      "edges": 24,
+      "analysis_seconds": 0.09,
+      "labeled_functions": 8,
+      "labeled_vulnerable": 0,
+      "exploitable": 0,
+      "missing_ground_truth_functions": [],
+      "detection": {
+        "reachprioritizer_taint": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tn": 8,
+          "accuracy": 1.0,
+          "flagged_functions": 0,
+          "flagged_unlabeled": 0
+        },
+        "ai_only_classifier": {
+          "tp": 0,
+          "fp": 5,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 1.0,
+          "f1": 0.0,
+          "tn": 3,
+          "accuracy": 0.375,
+          "flagged_functions": 6,
+          "flagged_unlabeled": 1
+        },
+        "v1_regex_rules": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 1.0,
+          "f1": 0.0,
+          "tn": 7,
+          "accuracy": 0.875,
+          "flagged_functions": 1,
+          "flagged_unlabeled": 0
+        },
+        "eslint_plugin_security": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 1.0,
+          "f1": 0.0,
+          "tn": 6,
+          "accuracy": 0.75,
+          "flagged_functions": 3,
+          "flagged_unlabeled": 1
+        }
+      },
+      "reachability": {
+        "tp": 6,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tn": 2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      "prioritization": {
+        "E0_severity_only": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.0,
+          "precision_at_5": 0.0,
+          "ndcg_at_5": null,
+          "ndcg_at_10": null,
+          "average_precision": null,
+          "first_relevant_rank": null,
+          "candidates": 6,
+          "relevant": 0,
+          "name": "Severity only (classic SAST)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.3,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::renderPage",
+              "score": 0.3,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.3,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "src/server.js::<createServer callback:L23>",
+              "score": 0.3,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "src/utils/serialize.js::mergeConfig",
+              "score": 0.3,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E1_ai_only": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.0,
+          "precision_at_5": 0.0,
+          "ndcg_at_5": null,
+          "ndcg_at_10": null,
+          "average_precision": null,
+          "first_relevant_rank": null,
+          "candidates": 6,
+          "relevant": 0,
+          "name": "AI probability only",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/server.js::<createServer callback:L23>",
+              "score": 0.742,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.6347,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/utils/serialize.js::mergeConfig",
+              "score": 0.633,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.6084,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 0.5632,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E2_ai_severity": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.0,
+          "precision_at_5": 0.0,
+          "ndcg_at_5": null,
+          "ndcg_at_10": null,
+          "average_precision": null,
+          "first_relevant_rank": null,
+          "candidates": 6,
+          "relevant": 0,
+          "name": "AI + severity",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/server.js::<createServer callback:L23>",
+              "score": 0.521,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.4673,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/utils/serialize.js::mergeConfig",
+              "score": 0.4665,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.4542,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 0.4316,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E3_ai_reachability": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.0,
+          "precision_at_5": 0.0,
+          "ndcg_at_5": null,
+          "ndcg_at_10": null,
+          "average_precision": null,
+          "first_relevant_rank": null,
+          "candidates": 6,
+          "relevant": 0,
+          "name": "AI + reachability",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/server.js::<createServer callback:L23>",
+              "score": 0.742,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.6347,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.6084,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 0.5632,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "src/utils/serialize.js::mergeConfig",
+              "score": 0.2532,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E4_ai_severity_reachability": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.0,
+          "precision_at_5": 0.0,
+          "ndcg_at_5": null,
+          "ndcg_at_10": null,
+          "average_precision": null,
+          "first_relevant_rank": null,
+          "candidates": 6,
+          "relevant": 0,
+          "name": "AI + severity + reachability (v1 formula)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/server.js::<createServer callback:L23>",
+              "score": 0.521,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.4673,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.4542,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 0.4316,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "src/utils/serialize.js::mergeConfig",
+              "score": 0.1166,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E5_reachprioritizer": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.0,
+          "precision_at_5": 0.0,
+          "ndcg_at_5": null,
+          "ndcg_at_10": null,
+          "average_precision": null,
+          "first_relevant_rank": null,
+          "candidates": 6,
+          "relevant": 0,
+          "name": "Full ReachPrioritizer (severity + taint + AI + reachability)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/server.js::<createServer callback:L23>",
+              "score": 0.3884,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::runCommand",
+              "score": 0.3669,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::listUserFiles",
+              "score": 0.3617,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "src/utils/serialize.js::parseUserData",
+              "score": 0.3526,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "src/utils/serialize.js::mergeConfig",
+              "score": 0.1466,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            }
+          ]
+        }
+      },
+      "findings_total": 0,
+      "findings_reachable_user_input": 0
+    },
+    {
+      "application": "mixed-app",
+      "files": 7,
+      "functions": 32,
+      "edges": 25,
+      "analysis_seconds": 0.07,
+      "labeled_functions": 10,
+      "labeled_vulnerable": 5,
+      "exploitable": 1,
+      "missing_ground_truth_functions": [],
+      "detection": {
+        "reachprioritizer_taint": {
+          "tp": 5,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tn": 5,
+          "accuracy": 1.0,
+          "flagged_functions": 5,
+          "flagged_unlabeled": 0
+        },
+        "ai_only_classifier": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.4,
+          "f1": 0.5714,
+          "tn": 5,
+          "accuracy": 0.7,
+          "flagged_functions": 7,
+          "flagged_unlabeled": 5
+        },
+        "v1_regex_rules": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.4,
+          "f1": 0.5714,
+          "tn": 5,
+          "accuracy": 0.7,
+          "flagged_functions": 2,
+          "flagged_unlabeled": 0
+        },
+        "eslint_plugin_security": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 5,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "tn": 5,
+          "accuracy": 0.5,
+          "flagged_functions": 3,
+          "flagged_unlabeled": 3
+        }
+      },
+      "reachability": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tn": 7,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      "prioritization": {
+        "E0_severity_only": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.3333,
+          "precision_at_5": 0.2,
+          "ndcg_at_5": 0.6309,
+          "ndcg_at_10": 0.6309,
+          "average_precision": 0.5,
+          "first_relevant_rank": 2,
+          "candidates": 10,
+          "relevant": 1,
+          "name": "Severity only (classic SAST)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/legacy/legacyProcessor.js::exportLegacyBackup",
+              "score": 1.0,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "parameter"
+            },
+            {
+              "rank": 2,
+              "function": "src/services/activeService.js::processCommand",
+              "score": 1.0,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/legacy/legacyProcessor.js::legacyAuth",
+              "score": 0.8,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "parameter"
+            },
+            {
+              "rank": 4,
+              "function": "src/legacy/legacyProcessor.js::processBatchSql",
+              "score": 0.8,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "parameter"
+            },
+            {
+              "rank": 5,
+              "function": "src/services/activeService.js::fetchExternalReport",
+              "score": 0.8,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E1_ai_only": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.0,
+          "precision_at_5": 0.0,
+          "ndcg_at_5": 0.0,
+          "ndcg_at_10": 0.3333,
+          "average_precision": 0.1429,
+          "first_relevant_rank": 7,
+          "candidates": 10,
+          "relevant": 1,
+          "name": "AI probability only",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/server.js::createApp",
+              "score": 0.7287,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "src/server.js::handle",
+              "score": 0.7256,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/apiController.js::handleFetch",
+              "score": 0.688,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "src/legacy/legacyProcessor.js::exportLegacyBackup",
+              "score": 0.6023,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "parameter"
+            },
+            {
+              "rank": 5,
+              "function": "src/controllers/apiController.js::handleProcess",
+              "score": 0.596,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E2_ai_severity": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.3333,
+          "precision_at_5": 0.2,
+          "ndcg_at_5": 0.6309,
+          "ndcg_at_10": 0.6309,
+          "average_precision": 0.5,
+          "first_relevant_rank": 2,
+          "candidates": 10,
+          "relevant": 1,
+          "name": "AI + severity",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/legacy/legacyProcessor.js::exportLegacyBackup",
+              "score": 0.8012,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "parameter"
+            },
+            {
+              "rank": 2,
+              "function": "src/services/activeService.js::processCommand",
+              "score": 0.7973,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/legacy/legacyProcessor.js::legacyAuth",
+              "score": 0.5605,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "parameter"
+            },
+            {
+              "rank": 4,
+              "function": "src/services/activeService.js::fetchExternalReport",
+              "score": 0.5368,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/server.js::createApp",
+              "score": 0.5144,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E3_ai_reachability": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.3333,
+          "precision_at_5": 0.2,
+          "ndcg_at_5": 0.6309,
+          "ndcg_at_10": 0.6309,
+          "average_precision": 0.5,
+          "first_relevant_rank": 2,
+          "candidates": 10,
+          "relevant": 1,
+          "name": "AI + reachability",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/controllers/apiController.js::handleProcess",
+              "score": 0.596,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "src/services/activeService.js::processCommand",
+              "score": 0.5946,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/server.js::createApp",
+              "score": 0.2915,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "src/routes/api.js::setupApiRoutes",
+              "score": 0.238,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "src/server.js::handle",
+              "score": 0.1451,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E4_ai_severity_reachability": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 0.3333,
+          "precision_at_5": 0.2,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 10,
+          "relevant": 1,
+          "name": "AI + severity + reachability (v1 formula)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/services/activeService.js::processCommand",
+              "score": 0.7973,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/apiController.js::handleProcess",
+              "score": 0.448,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/legacy/legacyProcessor.js::exportLegacyBackup",
+              "score": 0.2003,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "parameter"
+            },
+            {
+              "rank": 4,
+              "function": "src/legacy/legacyProcessor.js::legacyAuth",
+              "score": 0.1401,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "parameter"
+            },
+            {
+              "rank": 5,
+              "function": "src/services/activeService.js::fetchExternalReport",
+              "score": 0.1342,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E5_reachprioritizer": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 0.3333,
+          "precision_at_5": 0.2,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 10,
+          "relevant": 1,
+          "name": "Full ReachPrioritizer (severity + taint + AI + reachability)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/services/activeService.js::processCommand",
+              "score": 0.9189,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/apiController.js::handleProcess",
+              "score": 0.3592,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "src/legacy/legacyProcessor.js::exportLegacyBackup",
+              "score": 0.1561,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "parameter"
+            },
+            {
+              "rank": 4,
+              "function": "src/server.js::createApp",
+              "score": 0.1543,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "src/services/activeService.js::fetchExternalReport",
+              "score": 0.1529,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "user_input"
+            }
+          ]
+        }
+      },
+      "findings_total": 5,
+      "findings_reachable_user_input": 1
+    },
+    {
+      "application": "express-app",
+      "files": 12,
+      "functions": 25,
+      "edges": 33,
+      "analysis_seconds": 0.07,
+      "labeled_functions": 16,
+      "labeled_vulnerable": 9,
+      "exploitable": 6,
+      "missing_ground_truth_functions": [],
+      "detection": {
+        "reachprioritizer_taint": {
+          "tp": 9,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tn": 7,
+          "accuracy": 1.0,
+          "flagged_functions": 9,
+          "flagged_unlabeled": 0
+        },
+        "ai_only_classifier": {
+          "tp": 3,
+          "fp": 2,
+          "fn": 6,
+          "precision": 0.6,
+          "recall": 0.3333,
+          "f1": 0.4286,
+          "tn": 5,
+          "accuracy": 0.5,
+          "flagged_functions": 6,
+          "flagged_unlabeled": 1
+        },
+        "v1_regex_rules": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 6,
+          "precision": 1.0,
+          "recall": 0.3333,
+          "f1": 0.5,
+          "tn": 7,
+          "accuracy": 0.625,
+          "flagged_functions": 5,
+          "flagged_unlabeled": 2
+        },
+        "eslint_plugin_security": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 7,
+          "precision": 0.6667,
+          "recall": 0.2222,
+          "f1": 0.3333,
+          "tn": 6,
+          "accuracy": 0.5,
+          "flagged_functions": 4,
+          "flagged_unlabeled": 1
+        }
+      },
+      "reachability": {
+        "tp": 11,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tn": 5,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      "prioritization": {
+        "E0_severity_only": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.3333,
+          "precision_at_5": 0.6,
+          "ndcg_at_5": 0.4469,
+          "ndcg_at_10": 0.693,
+          "average_precision": 0.5653,
+          "first_relevant_rank": 3,
+          "candidates": 12,
+          "relevant": 6,
+          "name": "Severity only (classic SAST)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/controllers/reportController.js::generateReport",
+              "score": 1.0,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/routes/adminRoutes.js::adminEval",
+              "score": 1.0,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::downloadFile",
+              "score": 0.8,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "src/controllers/fileController.js::proxyRequest",
+              "score": 0.8,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/services/userService.js::UserService.search",
+              "score": 0.8,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E1_ai_only": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 0.6667,
+          "precision_at_5": 0.4,
+          "ndcg_at_5": 0.5531,
+          "ndcg_at_10": 0.773,
+          "average_precision": 0.6531,
+          "first_relevant_rank": 1,
+          "candidates": 12,
+          "relevant": 6,
+          "name": "AI probability only",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/utils/merge.js::deepMerge",
+              "score": 0.8038,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::downloadFile",
+              "score": 0.6202,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/userController.js::getAvatar",
+              "score": 0.6132,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "src/app.js::<listen callback:L17>",
+              "score": 0.595,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "src/utils/merge.js::safeMerge",
+              "score": 0.5697,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E2_ai_severity": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 0.6667,
+          "precision_at_5": 0.6,
+          "ndcg_at_5": 0.6399,
+          "ndcg_at_10": 0.7662,
+          "average_precision": 0.6631,
+          "first_relevant_rank": 1,
+          "candidates": 12,
+          "relevant": 6,
+          "name": "AI + severity",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/utils/merge.js::deepMerge",
+              "score": 0.8019,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/routes/adminRoutes.js::adminEval",
+              "score": 0.7675,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::downloadFile",
+              "score": 0.7101,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "src/controllers/reportController.js::generateReport",
+              "score": 0.6789,
+              "exploitable": false,
+              "reachability": "unreachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/controllers/fileController.js::proxyRequest",
+              "score": 0.6243,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E3_ai_reachability": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 0.6667,
+          "precision_at_5": 0.8,
+          "ndcg_at_5": 0.8304,
+          "ndcg_at_10": 0.9442,
+          "average_precision": 0.8556,
+          "first_relevant_rank": 1,
+          "candidates": 12,
+          "relevant": 6,
+          "name": "AI + reachability",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/utils/merge.js::deepMerge",
+              "score": 0.8038,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::downloadFile",
+              "score": 0.6202,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/userController.js::getAvatar",
+              "score": 0.6132,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "src/controllers/fileController.js::proxyRequest",
+              "score": 0.4486,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/routes/userRoutes.js::<GET /greet handler:L13>",
+              "score": 0.2769,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E4_ai_severity_reachability": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 0.8,
+          "ndcg_at_5": 0.8688,
+          "ndcg_at_10": 0.9838,
+          "average_precision": 0.9484,
+          "first_relevant_rank": 1,
+          "candidates": 12,
+          "relevant": 6,
+          "name": "AI + severity + reachability (v1 formula)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/utils/merge.js::deepMerge",
+              "score": 0.8019,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::downloadFile",
+              "score": 0.7101,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::proxyRequest",
+              "score": 0.6243,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "src/services/userService.js::UserService.search",
+              "score": 0.4571,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/controllers/userController.js::getAvatar",
+              "score": 0.4566,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E5_reachprioritizer": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 1.0,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 12,
+          "relevant": 6,
+          "name": "Full ReachPrioritizer (severity + taint + AI + reachability)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "src/utils/merge.js::deepMerge",
+              "score": 0.8708,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "src/controllers/fileController.js::downloadFile",
+              "score": 0.834,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "src/controllers/fileController.js::proxyRequest",
+              "score": 0.7997,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "src/services/userService.js::UserService.search",
+              "score": 0.7328,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "src/routes/userRoutes.js::<GET /greet handler:L13>",
+              "score": 0.6529,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        }
+      },
+      "findings_total": 9,
+      "findings_reachable_user_input": 6
+    }
+  ],
+  "realworld": [
+    {
+      "application": "NodeGoat",
+      "files": 26,
+      "functions": 115,
+      "edges": 152,
+      "analysis_seconds": 0.14,
+      "labeled_functions": 5,
+      "labeled_vulnerable": 5,
+      "exploitable": 5,
+      "missing_ground_truth_functions": [],
+      "detection": {
+        "reachprioritizer_taint": {
+          "tp": 5,
+          "fn": 0,
+          "recall": 1.0,
+          "flagged_functions": 6,
+          "flagged_unlabeled": 1
+        },
+        "ai_only_classifier": {
+          "tp": 4,
+          "fn": 1,
+          "recall": 0.8,
+          "flagged_functions": 32,
+          "flagged_unlabeled": 28
+        },
+        "v1_regex_rules": {
+          "tp": 3,
+          "fn": 2,
+          "recall": 0.6,
+          "flagged_functions": 6,
+          "flagged_unlabeled": 3
+        },
+        "eslint_plugin_security": {
+          "tp": 2,
+          "fn": 3,
+          "recall": 0.4,
+          "flagged_functions": 4,
+          "flagged_unlabeled": 2
+        }
+      },
+      "reachability": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tn": 0,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      "prioritization": {
+        "E0_severity_only": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 1.0,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 34,
+          "relevant": 5,
+          "name": "Severity only (classic SAST)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "app/routes/contributions.js::ContributionsHandler.handleContributionsUpdate",
+              "score": 1.0,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "app/data/allocations-dao.js::searchCriteria",
+              "score": 0.8,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "app/routes/research.js::ResearchHandler.displayResearch",
+              "score": 0.8,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "app/routes/index.js::<GET /learn handler:L70>",
+              "score": 0.55,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "app/routes/profile.js::ProfileHandler.handleProfileUpdate",
+              "score": 0.55,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E1_ai_only": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.0,
+          "precision_at_5": 0.0,
+          "ndcg_at_5": 0.0,
+          "ndcg_at_10": 0.0,
+          "average_precision": 0.1209,
+          "first_relevant_rank": 12,
+          "candidates": 34,
+          "relevant": 5,
+          "name": "AI probability only",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "app/routes/session.js::SessionHandler",
+              "score": 0.9631,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "app/routes/index.js::index",
+              "score": 0.9183,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "server.js::<connect callback:L30>",
+              "score": 0.857,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "app/routes/session.js::SessionHandler.handleLoginRequest",
+              "score": 0.855,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "app/routes/session.js::<validateLogin callback:L58>",
+              "score": 0.8334,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E2_ai_severity": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 0.6667,
+          "precision_at_5": 0.6,
+          "ndcg_at_5": 0.6844,
+          "ndcg_at_10": 0.9182,
+          "average_precision": 0.7962,
+          "first_relevant_rank": 1,
+          "candidates": 34,
+          "relevant": 5,
+          "name": "AI + severity",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "app/routes/contributions.js::ContributionsHandler.handleContributionsUpdate",
+              "score": 0.8152,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "app/routes/research.js::ResearchHandler.displayResearch",
+              "score": 0.7869,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "app/routes/session.js::SessionHandler",
+              "score": 0.6315,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "app/routes/index.js::index",
+              "score": 0.6092,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "app/routes/profile.js::ProfileHandler.handleProfileUpdate",
+              "score": 0.6007,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E3_ai_reachability": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.0,
+          "precision_at_5": 0.2,
+          "ndcg_at_5": 0.1312,
+          "ndcg_at_10": 0.2292,
+          "average_precision": 0.2379,
+          "first_relevant_rank": 5,
+          "candidates": 34,
+          "relevant": 5,
+          "name": "AI + reachability",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "app/routes/session.js::SessionHandler.handleLoginRequest",
+              "score": 0.855,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "app/routes/session.js::<validateLogin callback:L58>",
+              "score": 0.8334,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "app/routes/session.js::validateSignup",
+              "score": 0.8072,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "app/routes/benefits.js::BenefitsHandler.updateBenefits",
+              "score": 0.794,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "app/routes/research.js::ResearchHandler.displayResearch",
+              "score": 0.7739,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E4_ai_severity_reachability": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 1.0,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 34,
+          "relevant": 5,
+          "name": "AI + severity + reachability (v1 formula)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "app/routes/contributions.js::ContributionsHandler.handleContributionsUpdate",
+              "score": 0.8152,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "app/routes/research.js::ResearchHandler.displayResearch",
+              "score": 0.7869,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "app/routes/profile.js::ProfileHandler.handleProfileUpdate",
+              "score": 0.6007,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "app/routes/index.js::<GET /learn handler:L70>",
+              "score": 0.5974,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "app/data/allocations-dao.js::searchCriteria",
+              "score": 0.5881,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E5_reachprioritizer": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 1.0,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 34,
+          "relevant": 5,
+          "name": "Full ReachPrioritizer (severity + taint + AI + reachability)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "app/routes/contributions.js::ContributionsHandler.handleContributionsUpdate",
+              "score": 0.9261,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "app/routes/research.js::ResearchHandler.displayResearch",
+              "score": 0.8648,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "app/data/allocations-dao.js::searchCriteria",
+              "score": 0.7852,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "app/routes/profile.js::ProfileHandler.handleProfileUpdate",
+              "score": 0.7278,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "app/routes/index.js::<GET /learn handler:L70>",
+              "score": 0.7264,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        }
+      },
+      "findings_total": 10,
+      "findings_reachable_user_input": 5,
+      "repository": "https://github.com/OWASP/NodeGoat",
+      "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8"
+    },
+    {
+      "application": "dvna",
+      "files": 12,
+      "functions": 74,
+      "edges": 85,
+      "analysis_seconds": 0.1,
+      "labeled_functions": 6,
+      "labeled_vulnerable": 6,
+      "exploitable": 6,
+      "missing_ground_truth_functions": [],
+      "detection": {
+        "reachprioritizer_taint": {
+          "tp": 6,
+          "fn": 0,
+          "recall": 1.0,
+          "flagged_functions": 8,
+          "flagged_unlabeled": 2
+        },
+        "ai_only_classifier": {
+          "tp": 4,
+          "fn": 2,
+          "recall": 0.6667,
+          "flagged_functions": 21,
+          "flagged_unlabeled": 17
+        },
+        "v1_regex_rules": {
+          "tp": 3,
+          "fn": 3,
+          "recall": 0.5,
+          "flagged_functions": 5,
+          "flagged_unlabeled": 2
+        },
+        "eslint_plugin_security": {
+          "tp": 0,
+          "fn": 6,
+          "recall": 0.0,
+          "flagged_functions": 2,
+          "flagged_unlabeled": 2
+        }
+      },
+      "reachability": {
+        "tp": 6,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tn": 0,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      "prioritization": {
+        "E0_severity_only": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 1.0,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 23,
+          "relevant": 6,
+          "name": "Severity only (classic SAST)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "core/appHandler.js::bulkProductsLegacy",
+              "score": 1.0,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "core/appHandler.js::calc",
+              "score": 1.0,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "core/appHandler.js::ping",
+              "score": 1.0,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "core/appHandler.js::bulkProducts",
+              "score": 0.8,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "core/appHandler.js::userSearch",
+              "score": 0.8,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E1_ai_only": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.0,
+          "precision_at_5": 0.0,
+          "ndcg_at_5": 0.0,
+          "ndcg_at_10": 0.1883,
+          "average_precision": 0.2246,
+          "first_relevant_rank": 7,
+          "candidates": 23,
+          "relevant": 6,
+          "name": "AI probability only",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "core/passport.js::<LocalStrategy callback:L53>",
+              "score": 0.8626,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "core/passport.js::findOrCreateUser",
+              "score": 0.8442,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "core/passport.js::module.exports",
+              "score": 0.8423,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 4,
+              "function": "core/passport.js::<then callback:L59>",
+              "score": 0.8197,
+              "exploitable": false,
+              "reachability": "startup_only",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "core/authHandler.js::resetPwSubmit",
+              "score": 0.7697,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E2_ai_severity": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 1.0,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 23,
+          "relevant": 6,
+          "name": "AI + severity",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "core/appHandler.js::ping",
+              "score": 0.8782,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "core/appHandler.js::calc",
+              "score": 0.8529,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "core/appHandler.js::userSearch",
+              "score": 0.7144,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "core/appHandler.js::bulkProductsLegacy",
+              "score": 0.6369,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "core/appHandler.js::bulkProducts",
+              "score": 0.5883,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E3_ai_reachability": {
+          "precision_at_1": 0.0,
+          "precision_at_3": 0.3333,
+          "precision_at_5": 0.2,
+          "ndcg_at_5": 0.1696,
+          "ndcg_at_10": 0.4377,
+          "average_precision": 0.333,
+          "first_relevant_rank": 3,
+          "candidates": 23,
+          "relevant": 6,
+          "name": "AI + reachability",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "core/authHandler.js::resetPwSubmit",
+              "score": 0.7697,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 2,
+              "function": "core/authHandler.js::forgotPw",
+              "score": 0.7592,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 3,
+              "function": "core/appHandler.js::ping",
+              "score": 0.7564,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "core/appHandler.js::<then callback:L149>",
+              "score": 0.7352,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            },
+            {
+              "rank": 5,
+              "function": "core/appHandler.js::userEditSubmit",
+              "score": 0.7352,
+              "exploitable": false,
+              "reachability": "reachable",
+              "taint": "unknown"
+            }
+          ]
+        },
+        "E4_ai_severity_reachability": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 1.0,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 23,
+          "relevant": 6,
+          "name": "AI + severity + reachability (v1 formula)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "core/appHandler.js::ping",
+              "score": 0.8782,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "core/appHandler.js::calc",
+              "score": 0.8529,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "core/appHandler.js::userSearch",
+              "score": 0.7144,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "core/appHandler.js::bulkProductsLegacy",
+              "score": 0.6369,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "core/appHandler.js::bulkProducts",
+              "score": 0.5883,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        },
+        "E5_reachprioritizer": {
+          "precision_at_1": 1.0,
+          "precision_at_3": 1.0,
+          "precision_at_5": 1.0,
+          "ndcg_at_5": 1.0,
+          "ndcg_at_10": 1.0,
+          "average_precision": 1.0,
+          "first_relevant_rank": 1,
+          "candidates": 23,
+          "relevant": 6,
+          "name": "Full ReachPrioritizer (severity + taint + AI + reachability)",
+          "top_5": [
+            {
+              "rank": 1,
+              "function": "core/appHandler.js::ping",
+              "score": 0.9513,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 2,
+              "function": "core/appHandler.js::calc",
+              "score": 0.9411,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 3,
+              "function": "core/appHandler.js::bulkProductsLegacy",
+              "score": 0.8548,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 4,
+              "function": "core/appHandler.js::userSearch",
+              "score": 0.8358,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            },
+            {
+              "rank": 5,
+              "function": "core/appHandler.js::bulkProducts",
+              "score": 0.7853,
+              "exploitable": true,
+              "reachability": "reachable",
+              "taint": "user_input"
+            }
+          ]
+        }
+      },
+      "findings_total": 9,
+      "findings_reachable_user_input": 6,
+      "repository": "https://github.com/appsecco/dvna",
+      "commit": "9ba473add536f66ac9007966acb2a775dd31277a"
+    }
+  ]
+}

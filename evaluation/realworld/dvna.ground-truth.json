@@ -1,0 +1,57 @@
+{
+  "application": "dvna",
+  "repository": "https://github.com/appsecco/dvna",
+  "commit": "9ba473add536f66ac9007966acb2a775dd31277a",
+  "schema": "reachprioritizer-ground-truth/v2",
+  "scope": "Only code-level vulnerabilities that a static source analyzer can be expected to find are listed (template-level XSS, access-control and configuration issues are out of scope). Labels taken from the project's own documentation / tutorial and verified by reading the code.",
+  "functions": [
+    {
+      "file": "core/appHandler.js",
+      "function": "userSearch",
+      "is_vulnerable": true,
+      "cwe": "CWE-89",
+      "is_reachable": true,
+      "note": "A1 SQL injection (sequelize.query with concatenated login)"
+    },
+    {
+      "file": "core/appHandler.js",
+      "function": "ping",
+      "is_vulnerable": true,
+      "cwe": "CWE-78",
+      "is_reachable": true,
+      "note": "A1 Command injection (exec('ping -c 2 ' + address))"
+    },
+    {
+      "file": "core/appHandler.js",
+      "function": "bulkProducts",
+      "is_vulnerable": true,
+      "cwe": "CWE-611",
+      "is_reachable": true,
+      "note": "A4 XXE (libxmljs parseXmlString with noent:true)"
+    },
+    {
+      "file": "core/appHandler.js",
+      "function": "bulkProductsLegacy",
+      "is_vulnerable": true,
+      "cwe": "CWE-502",
+      "is_reachable": true,
+      "note": "A8 Insecure deserialization (node-serialize.unserialize)"
+    },
+    {
+      "file": "core/appHandler.js",
+      "function": "calc",
+      "is_vulnerable": true,
+      "cwe": "CWE-94",
+      "is_reachable": true,
+      "note": "A9 Vulnerable component: mathjs.eval code execution"
+    },
+    {
+      "file": "core/appHandler.js",
+      "function": "redirect",
+      "is_vulnerable": true,
+      "cwe": "CWE-601",
+      "is_reachable": true,
+      "note": "A10 Unvalidated redirect"
+    }
+  ]
+}

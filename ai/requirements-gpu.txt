@@ -1,0 +1,8 @@
+# Extra packages for CodeBERT training / inference.
+# Install PyTorch FIRST with the CUDA build for your GPU (see ai/training/README.md), then:
+#   pip install -r ai/requirements-gpu.txt
+transformers>=4.40
+accelerate>=0.30
+safetensors>=0.4
+scikit-learn>=1.3
+numpy>=1.24

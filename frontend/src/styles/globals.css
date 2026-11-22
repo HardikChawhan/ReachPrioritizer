@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root { color-scheme: dark; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    @apply bg-ink-950 text-fog-100 font-sans min-h-screen;
+    background-image:
+      radial-gradient(1200px 520px at 50% -180px, rgba(180,255,57,0.13), transparent 70%),
+      radial-gradient(800px 400px at 85% 10%, rgba(180,255,57,0.04), transparent 70%);
+    background-attachment: fixed;
+  }
+  ::selection { background: rgba(180,255,57,0.3); color: #fff; }
+  * { scrollbar-width: thin; scrollbar-color: #2a302a transparent; }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-thumb { background: #232823; border-radius: 8px; }
+  :focus-visible { outline: 2px solid rgba(180,255,57,0.7); outline-offset: 2px; border-radius: 6px; }
+}
+
+@layer components {
+  .glass {
+    @apply rounded-2xl border border-white/[0.07] bg-white/[0.025] backdrop-blur-xl shadow-card;
+  }
+  .glass-hover {
+    @apply transition-all duration-300 hover:border-lime/30 hover:bg-white/[0.04];
+  }
+  .label-bracket {
+    @apply font-mono text-[11px] uppercase tracking-[0.22em] text-lime;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-lime text-ink-950 hover:bg-lime-300 shadow-glow-sm;
+  }
+  .btn-ghost {
+    @apply btn border border-white/10 bg-white/[0.03] text-fog-100 hover:border-lime/40 hover:text-white;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-fog-300 transition-colors hover:border-white/25 hover:text-fog-50 cursor-pointer select-none;
+  }
+  .chip-active {
+    @apply border-lime/50 bg-lime/10 text-lime;
+  }
+  .input {
+    @apply w-full rounded-xl border border-white/10 bg-ink-850/80 px-4 py-2.5 text-sm text-fog-50 placeholder:text-fog-500 outline-none transition focus:border-lime/50 focus:shadow-glow-sm;
+  }
+  .grid-lines {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+  .text-fade {
+    background: linear-gradient(90deg, rgba(243,245,241,0.95), rgba(243,245,241,0.25));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-lime-grad {
+    background: linear-gradient(90deg, #DCFF9E, #B4FF39 45%, #76B80F);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .skeleton {
+    @apply rounded-lg;
+    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+    background-size: 200% 100%;
+    animation: shimmer 2.2s linear infinite;
+  }
+}
+
+.code-line:hover { background: rgba(255,255,255,0.025); }

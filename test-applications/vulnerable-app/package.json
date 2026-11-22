@@ -1,0 +1,6 @@
+{
+  "name": "vuln-app",
+  "version": "1.0.0",
+  "description": "Intentionally vulnerable test application for ReachPrioritizer",
+  "main": "src/server.js"
+}

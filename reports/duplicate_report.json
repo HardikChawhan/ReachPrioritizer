@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-10-01T06:14:12.321Z",
+  "total_usable_records": 21896,
+  "raw_duplicate_groups": 0,
+  "raw_duplicate_records": 0,
+  "raw_conflicting_labels": 0,
+  "top5_raw_duplicate_groups": [],
+  "norm_duplicate_groups": 0,
+  "norm_duplicate_records": 0,
+  "norm_conflicting_labels": 0,
+  "top5_norm_duplicate_groups": []
+}

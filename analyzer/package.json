@@ -1,0 +1,17 @@
+{
+  "name": "reachprioritizer-analyzer",
+  "version": "2.0.0",
+  "description": "Static call-graph, entry-point, reachability and taint engine for ReachPrioritizer (JavaScript / TypeScript / Node.js)",
+  "main": "lib/project.js",
+  "bin": { "rp-analyze": "analyze.js" },
+  "scripts": {
+    "analyze": "node analyze.js",
+    "test": "node --test test/engine.test.js"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.25.0",
+    "minimist": "^1.2.8"
+  },
+  "engines": { "node": ">=18.0.0" },
+  "license": "MIT"
+}

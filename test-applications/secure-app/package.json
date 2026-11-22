@@ -1,0 +1,6 @@
+{
+  "name": "secure-app",
+  "version": "1.0.0",
+  "description": "Secure test application for ReachPrioritizer false-positive testing",
+  "main": "src/server.js"
+}

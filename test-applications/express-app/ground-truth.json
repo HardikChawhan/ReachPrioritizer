@@ -1,0 +1,141 @@
+{
+  "application": "express-app",
+  "description": "Realistic Express application: routers mounted with app.use, class-based service, dead route files, sanitizers",
+  "schema": "reachprioritizer-ground-truth/v2",
+  "reachability_definition": "is_reachable = the function can be executed while serving an attacker request (reachable from an active route / request handler). Code that only runs at startup or is never wired up counts as NOT reachable.",
+  "entry_points": [
+    "src/app.js"
+  ],
+  "functions": [
+    {
+      "file": "src/services/userService.js",
+      "function": "UserService.search",
+      "is_vulnerable": true,
+      "cwe": "CWE-89",
+      "is_reachable": true,
+      "note": "POST /api/users/search -> searchUsers -> UserService.search (template-literal SQL)"
+    },
+    {
+      "file": "src/utils/merge.js",
+      "function": "deepMerge",
+      "is_vulnerable": true,
+      "cwe": "CWE-1321",
+      "is_reachable": true,
+      "note": "POST /api/users/settings -> updateSettings -> deepMerge(req.body)"
+    },
+    {
+      "file": "src/routes/userRoutes.js",
+      "function": "<GET /greet handler>",
+      "is_vulnerable": true,
+      "cwe": "CWE-79",
+      "is_reachable": true,
+      "note": "Inline handler reflects req.query.name into HTML",
+      "line": 13
+    },
+    {
+      "file": "src/controllers/fileController.js",
+      "function": "downloadFile",
+      "is_vulnerable": true,
+      "cwe": "CWE-22",
+      "is_reachable": true,
+      "note": "GET /api/files/download"
+    },
+    {
+      "file": "src/controllers/fileController.js",
+      "function": "proxyRequest",
+      "is_vulnerable": true,
+      "cwe": "CWE-918",
+      "is_reachable": true,
+      "note": "GET /api/files/proxy"
+    },
+    {
+      "file": "src/routes/fileRoutes.js",
+      "function": "goHandler",
+      "is_vulnerable": true,
+      "cwe": "CWE-601",
+      "is_reachable": true,
+      "note": "GET /api/files/go"
+    },
+    {
+      "file": "src/routes/adminRoutes.js",
+      "function": "adminEval",
+      "is_vulnerable": true,
+      "cwe": "CWE-94",
+      "is_reachable": false,
+      "note": "Router file is never required/mounted"
+    },
+    {
+      "file": "src/controllers/reportController.js",
+      "function": "generateReport",
+      "is_vulnerable": true,
+      "cwe": "CWE-78",
+      "is_reachable": false,
+      "note": "Controller is never referenced"
+    },
+    {
+      "file": "src/config.js",
+      "function": "__top_level__",
+      "is_vulnerable": true,
+      "cwe": "CWE-798",
+      "is_reachable": false,
+      "note": "Hardcoded secret; module-level code runs at startup only"
+    },
+    {
+      "file": "src/services/userService.js",
+      "function": "UserService.findById",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": true,
+      "note": "Parameterized query"
+    },
+    {
+      "file": "src/controllers/userController.js",
+      "function": "getAvatar",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": true,
+      "note": "path.basename sanitizes the file name"
+    },
+    {
+      "file": "src/controllers/fileController.js",
+      "function": "convertImage",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": true,
+      "note": "execFile without shell, constant executable"
+    },
+    {
+      "file": "src/routes/userRoutes.js",
+      "function": "<GET /greet-safe handler>",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": true,
+      "note": "Output escaped with escapeHtml",
+      "line": 18
+    },
+    {
+      "file": "src/utils/merge.js",
+      "function": "safeMerge",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": false,
+      "note": "Blocks dangerous keys; unused"
+    },
+    {
+      "file": "src/jobs/cleanup.js",
+      "function": "cleanTmp",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": false,
+      "note": "Startup timer job; no user input"
+    },
+    {
+      "file": "src/controllers/userController.js",
+      "function": "getUser",
+      "is_vulnerable": false,
+      "cwe": null,
+      "is_reachable": true,
+      "note": "Delegates to parameterized findById"
+    }
+  ]
+}

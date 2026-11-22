@@ -1,0 +1,13 @@
+# ReachPrioritizer backend (Python 3.10+)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+scikit-learn>=1.3
+joblib>=1.3
+numpy>=1.24
+
+# Tests
+pytest>=8.0
+httpx>=0.27
+
+# CodeBERT inference/training is optional — see ai/requirements-gpu.txt
