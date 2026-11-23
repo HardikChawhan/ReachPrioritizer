@@ -63,7 +63,7 @@ Source code is only **parsed, never executed**.
 
 **AI**
 - Function-level classifier trained on **21,896** real JavaScript functions (JsVul, repository-disjoint splits).
-- TF-IDF + Logistic Regression shipped; **CodeBERT** GPU training script included. The best model is picked automatically by its **measured** test F1.
+- TF-IDF + Logistic Regression is active (test F1 0.40). **CodeBERT** was fine-tuned on an RTX 4060 (22.6 min) and reached test F1 0.35, so the measured-F1 policy keeps TF-IDF. The best model is always picked automatically by its **measured** test F1.
 
 **Prioritization**
 - `risk = 100 × reachability × (0.45·severity + 0.35·exploitability + 0.20·AI)`, with a full breakdown for every finding.
@@ -267,7 +267,7 @@ The JsVul dataset is larger than GitHub's file limit and is rebuilt on demand:
 ```bash
 bash scripts/fetch_dataset.sh             # JsVul @036c7f7 -> data/processed (seed 42)
 python ai/training/train_fallback.py      # TF-IDF, CPU, ~1 min
-python ai/training/train_codebert.py      # CodeBERT, GPU (~45–90 min on an RTX 4060)
+python ai/training/train_codebert.py      # CodeBERT, GPU (22.6 min measured on an RTX 4060 laptop)
 ```
 
 GPU setup for RTX 4060 / 5070 Ti laptops: [docs/AI_MODEL_AND_TRAINING.md](docs/AI_MODEL_AND_TRAINING.md).
@@ -301,7 +301,7 @@ GPU setup for RTX 4060 / 5070 Ti laptops: [docs/AI_MODEL_AND_TRAINING.md](docs/A
 - No built-in authentication: run it locally or behind your own proxy.
 
 **Roadmap**
-- Train and benchmark CodeBERT / UniXcoder on GPU.
+- Improve the transformer model (UniXcoder, longer context): CodeBERT currently trails TF-IDF on unseen projects.
 - Larger benchmarks (SecBench.js, CVE-linked npm packages).
 - Field- and flow-sensitive taint; library summaries for ORMs and template engines.
 - Dependency reachability (are vulnerable npm functions reachable from app code?).

@@ -21,10 +21,13 @@ ReachPrioritizer uses a **function-level vulnerability classifier**: given a fun
 | Input | Word 1–2-grams of the normalized source (10,000 features, sublinear TF) | Up to 512 BPE tokens |
 | Classifier | Logistic regression, `class_weight=balanced` | `microsoft/codebert-base` + classification head, class-weighted cross-entropy |
 | Hardware | Any CPU | NVIDIA GPU recommended |
-| Test F1 / precision / recall / ROC-AUC | **0.402 / 0.276 / 0.737 / 0.806** | Measured when you train it |
-| Status | Active (shipped) | Selected automatically if its test F1 is higher |
+| Test F1 / precision / recall / ROC-AUC | **0.402 / 0.276 / 0.737 / 0.806** | 0.354 / 0.238 / 0.687 / 0.773 |
+| Validation F1 | 0.331 | 0.398 (best epoch 1 of 3, early-stopped) |
+| Status | **Active** (higher test F1) | Trained (RTX 4060, bf16, 22.6 min); not selected |
 
 The low precision is typical of function-level classification with a 9:1 class imbalance. This is why the model is a weighted signal and not the detector.
+
+**CodeBERT result.** Fine-tuned CodeBERT beat TF-IDF on the validation split (F1 0.398 vs 0.331) but not on the held-out test split (0.354 vs 0.402; ROC-AUC 0.773 vs 0.806). The test split contains repositories that appear in neither training nor validation, so this points to weaker generalization to unseen projects. Likely contributing factors: the 512-token truncation of long functions, the small number of vulnerable training examples (1,567), and the near-identical vulnerable/fixed function pairs. Because the selection policy uses measured test F1, the backend keeps TF-IDF. Possible improvements are UniXcoder (`--model microsoft/unixcoder-base`), more epochs with a lower learning rate, or adding commit context.
 
 ## Model selection (`RP_MODEL`)
 
@@ -48,7 +51,7 @@ Estimated time for the full split (17,621 functions, up to 4 epochs with early s
 
 | GPU | VRAM | Estimated time |
 |---|---|---|
-| RTX 4060 Laptop | 8 GB | ~45–90 min |
+| RTX 4060 Laptop | 8 GB | **22.6 min measured** (3 epochs, ~7 min each, early stop) |
 | RTX 5070 Ti Laptop | 12 GB | ~25–45 min |
 | CPU only | – | many hours (not recommended) |
 

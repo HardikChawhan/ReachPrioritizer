@@ -168,7 +168,9 @@ The backend selects the model with the highest *recorded test F1* (`RP_MODEL=aut
 |---|---:|---:|---:|---:|---|
 | TF-IDF + LR (threshold 0.5) | 0.276 | 0.737 | 0.402 | 0.806 | active (re-verified through the v2 inference path) |
 | CodeBERT (v1 quick-test checkpoint) | 0.000 | 0.000 | 0.000 | – | not eligible |
-| CodeBERT (full GPU training) | – | – | – | – | to be trained with the v2 script; selected automatically if better |
+| CodeBERT (fine-tuned, RTX 4060, bf16, 3 epochs, threshold 0.26 tuned on validation) | 0.238 | 0.687 | 0.354 | 0.773 | trained; not selected (lower test F1) |
+
+CodeBERT reached a higher *validation* F1 than TF-IDF (0.398 vs 0.331) but a lower *test* F1 (0.354 vs 0.402). The test split consists of unseen repositories, so the transformer generalized worse across projects in this setting. Contributing factors are likely the 512-token truncation, the small number of positive training examples (1,567) and near-identical vulnerable/fixed pairs. The measured-F1 selection policy therefore keeps TF-IDF as the active model, which is the safeguard working as intended.
 
 The classifier's precision is low, which is typical of function-level vulnerability classification under 9:1 imbalance. This is why it is used as one weighted signal (20%) and to raise *AI-suspected* functions (probability ≥ 0.85), but never as the sole detector.
 
@@ -302,7 +304,7 @@ JavaScript's dynamism limits static resolution: computed property calls, depende
 ---
 
 ## 13. Future Work
-1. Fully train CodeBERT / UniXcoder on GPU and report its test metrics. It is selected automatically if better.
+1. Improve the transformer classifier, which currently trails TF-IDF on unseen repositories (test F1 0.354 vs 0.402): UniXcoder, longer context or function chunking, commit-level context, and more positive examples.
 2. Evaluate on SecBench.js and a corpus of CVE-linked npm packages with reproduced exploits.
 3. Field-sensitive and flow-sensitive taint, and summaries for popular npm libraries (ORMs, template engines).
 4. Dependency-aware reachability: whether vulnerable functions of third-party packages are reachable from application code.

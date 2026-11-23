@@ -118,7 +118,7 @@ The website itself has a **guided tour** (the "Tour" button at the top) and a **
 - We used **JsVul**, a public dataset of **21,896 JavaScript functions** taken from real security fixes on GitHub (1,164 projects). About 9% of them are vulnerable, the rest are normal code.
 - We split it into **train / validation / test** sets *by project*, so the model is tested on projects it has never seen. This prevents cheating.
 - The default model (TF-IDF + Logistic Regression) finds **74% of the vulnerable functions** in the test set, but it also raises many false alarms (precision 28%). That's why the AI is only **one ingredient** of the score, and the concrete findings come from the rule-based taint engine.
-- A stronger model (CodeBERT) can be trained on a GPU. The app automatically switches to it if it scores better.
+- We also trained a neural network (**CodeBERT**) on an RTX 4060 laptop GPU (22 minutes). It did better on the validation data, but slightly **worse** on the final test set of unseen projects (F1 0.35 vs 0.40). The app always uses the model with the better test score, so it automatically kept TF-IDF. This is an honest research finding: a bigger model is not automatically better on new projects.
 
 ---
 
