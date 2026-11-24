@@ -9,6 +9,7 @@ from typing import Dict
 
 from app.config import (
     ALLOWED_EXTRACT_EXTENSIONS,
+    ALLOWED_EXTRACT_NAMES,
     MAX_COMPRESSION_RATIO,
     MAX_FILES_IN_ZIP,
     MAX_SINGLE_FILE_SIZE,
@@ -75,7 +76,7 @@ def extract_project_zip(zip_path: Path, target_dir: Path) -> Path:
             if info.is_dir() or _is_symlink(info):
                 continue
             name = info.filename.replace("\\", "/")
-            if "/node_modules/" in f"/{name}" or Path(name).suffix.lower() not in ALLOWED_EXTRACT_EXTENSIONS:
+            if "/node_modules/" in f"/{name}" or (Path(name).suffix.lower() not in ALLOWED_EXTRACT_EXTENSIONS and Path(name).name not in ALLOWED_EXTRACT_NAMES):
                 continue
             if info.file_size > MAX_SINGLE_FILE_SIZE:
                 logger.info("Skipping large file %s (%d bytes)", name, info.file_size)

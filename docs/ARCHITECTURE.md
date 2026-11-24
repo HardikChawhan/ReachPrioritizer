@@ -60,8 +60,8 @@ sequenceDiagram
   participant N as analyze.js (Node)
   participant M as AI model
   participant DB as SQLite
-  B->>API: POST /api/projects/upload (zip)
-  API->>API: stream to disk, inspect_zip() (size, traversal, zip-bomb)
+  B->>API: POST /api/projects/upload (zip) or /from-github (url)
+  API->>API: stream to disk (or download from codeload.github.com), inspect_zip() (size, traversal, zip-bomb)
   API->>DB: insert project + scan (status=queued)
   API-->>B: {project, scan}
   API->>W: background task run_scan()
@@ -71,7 +71,8 @@ sequenceDiagram
   N-->>W: nodes, edges, entry_points, findings, reachability
   W->>M: predict_proba(function sources)
   M-->>W: probability per function
-  W->>W: build_findings(): attach AI, reachability, risk score
+  W->>W: build_findings(): attach AI, reachability, risk score, attack simulation
+  W->>W: dependency_check(): package.json -> OSV advisories -> call-graph usage
   W->>DB: save nodes, edges, entry points, findings (one transaction)
   W->>DB: status=completed + summary
   loop every second
@@ -94,7 +95,7 @@ sequenceDiagram
 | **SQLite + worker threads** | Zero-install, adequate for a research tool. Scans run in a bounded thread pool (`RP_MAX_CONCURRENT_SCANS`) so the API stays responsive. |
 | **Per-scan composite keys for graph nodes** | v1 used a global primary key, so rescanning a project overwrote older scans' graphs. |
 
-## Data model (SQLite, schema v2)
+## Data model (SQLite, schema v3)
 
 ```mermaid
 erDiagram
@@ -107,7 +108,10 @@ erDiagram
              text name
              text upload_path
              int file_count
-             int size_bytes }
+             int size_bytes
+             text source_type
+             text source_url
+             text source_ref }
   scans { text scan_id PK
           text project_id FK
           text status
@@ -115,7 +119,8 @@ erDiagram
           int progress
           text summary_json
           text model_used
-          text analysis_mode }
+          text analysis_mode
+          text source_ref }
   findings { text finding_id PK
              text scan_id FK
              text function_id
@@ -126,7 +131,8 @@ erDiagram
              text call_path
              text taint_path
              real risk_score
-             text risk_breakdown }
+             text risk_breakdown
+             text extra_json }
   call_graph_nodes { text scan_id PK
                      text node_id PK
                      text reachability
@@ -143,7 +149,7 @@ erDiagram
                  int active }
 ```
 
-All child tables use `ON DELETE CASCADE`. JSON-valued columns (`call_path`, `taint_path`, `risk_breakdown`, `summary_json`, …) are stored as text. A v1 database is detected at start-up and recreated (`models/database.py`).
+All child tables use `ON DELETE CASCADE`. JSON-valued columns (`call_path`, `taint_path`, `risk_breakdown`, `summary_json`, …) are stored as text. `findings.extra_json` holds the attack simulation and the dependency details. A v1 database is detected at start-up and recreated; a v2 database is upgraded in place by adding the new columns, so existing scans survive (`models/database.py`).
 
 ## Security of the tool itself
 

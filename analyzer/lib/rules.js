@@ -31,6 +31,32 @@ function isSourceChain(chain) {
   return false;
 }
 
+/**
+ * Short, human label for a source chain, used by the attack simulator:
+ *   req.query.file -> 'query.file', ctx.request.body.name -> 'body.name',
+ *   req.query -> 'query', process.argv -> 'argv'.
+ */
+function sourceLabel(chain) {
+  if (!chain || !chain.length) return 'input';
+  if (REQUEST_ROOTS.has(chain[0])) {
+    for (let i = 1; i < Math.min(chain.length, 3); i++) {
+      if (REQUEST_PROPS.has(chain[i])) return chain.slice(i, i + 2).join('.');
+    }
+  }
+  if (chain[0] === 'process') return 'argv';
+  if (chain[0] === 'document' && chain[1] === 'cookie') return 'cookie';
+  return 'location';
+}
+
+/** Label for req.get('x-api-key') / req.param('id') style getters. */
+function getterLabel(chain, firstArg) {
+  const g = chain[chain.length - 1];
+  const name = firstArg || '';
+  if (g === 'get' || g === 'header') return name ? `headers.${name.toLowerCase()}` : 'headers';
+  if (g === 'cookie') return name ? `cookies.${name}` : 'cookies';
+  return name ? `param.${name}` : 'param';
+}
+
 /** req.get('x') / req.header('x') / req.param('x') */
 function isSourceCall(chain) {
   return !!chain && chain.length === 2 && REQUEST_ROOTS.has(chain[0]) && REQUEST_GETTERS.has(chain[1]) && chain[0] !== 'event';
@@ -208,6 +234,6 @@ const SECRET_NAME = /^(pass(word|wd)?|pwd|secret|client_?secret|api_?key|apikey|
 const PLACEHOLDER = /^(changeme|change_me|password|secret|xxx+|\*+|todo|example|your[_-].*|<.*>|test|dummy)$/i;
 
 module.exports = {
-  isSourceChain, isSourceCall, isSanitizer, NEUTRAL_PROPS, matchCallSink,
+  isSourceChain, isSourceCall, sourceLabel, getterLabel, isSanitizer, NEUTRAL_PROPS, matchCallSink,
   SQL_TEXT, SQL_FRAGMENT, HTML_TEXT, EVIL_REGEX, SECRET_NAME, PLACEHOLDER, SEVERITY_RANK, RESPONSE_ROOTS,
 };

@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional
 
 from app.config import AI_ONLY_MIN_PROBABILITY, MAX_CONCURRENT_SCANS
 from app.core.upload_handler import UploadError, extract_project_zip, single_root
-from app.services import ai_inference, semgrep_scanner
+from app.services import ai_inference, attack_sim, dependency_check, semgrep_scanner
 from app.services.analyzer_runner import AnalyzerError, run_analyzer
 from app.services.persistence import get_project, save_scan_results, update_scan
 from app.services.risk_scorer import calculate_risk
@@ -115,6 +115,9 @@ def build_findings(analysis: Dict[str, Any], ai_probs: Dict[str, float], model: 
             "risk_breakdown": breakdown,
             "finding_type": finding_type,
             "detector": detector,
+            "sources": f.get("sources") or [],
+            "template": f.get("template"),
+            "taint_hops": f.get("taint_hops") or [],
         }
 
     for f in analysis.get("findings", []):
@@ -152,6 +155,28 @@ def build_findings(analysis: Dict[str, Any], ai_probs: Dict[str, float], model: 
         }
         out.append(make(f, node, "ai-model", "ai_prediction"))
 
+    port = int((analysis.get("server") or {}).get("port") or 3000)
+    # route registrations by handler id (inactive ones too: dead routers still have a URL)
+    routes_by_id: Dict[str, Dict] = {}
+    for e in analysis.get("entry_points", []):
+        if e.get("kind") in ("route", "server", "platform"):
+            if e["id"] not in routes_by_id or (e.get("active") and not routes_by_id[e["id"]].get("active")):
+                routes_by_id[e["id"]] = e
+    for item in out:
+        tp = item.get("taint_path") or []
+        start = by_id.get(tp[0]) if tp else None
+        sim_input = dict(item)
+        if start and (start.get("entry") or {}).get("kind") in ("route", "server", "platform"):
+            sim_input["entry_point"] = start["entry"]
+        elif tp and tp[0] in routes_by_id:
+            e = routes_by_id[tp[0]]
+            sim_input["entry_point"] = {"kind": e["kind"], "label": e.get("label"), "method": e.get("method"), "path": e.get("path"), "active": bool(e.get("active"))}
+        try:
+            item["attack"] = attack_sim.simulate(sim_input, by_id, port)
+        except Exception as exc:  # the simulator must never break a scan
+            logger.warning("attack simulation failed for %s: %s", item.get("function_name"), exc)
+            item["attack"] = None
+
     out.sort(key=lambda x: x["risk_score"], reverse=True)
     return out
 
@@ -165,6 +190,7 @@ def summarize(analysis: Dict[str, Any], findings: List[Dict[str, Any]], model: D
     by_cwe = Counter(f["cwe"] for f in findings)
     total = len(findings)
     actionable = sum(1 for f in findings if f["reachability_status"] == "reachable" and f["taint"] == "user_input")
+    simulated = sum(1 for f in findings if (f.get("attack") or {}).get("verdict") == "exploitable")
     deprioritized = sum(1 for f in findings if f["reachability_status"] in ("unreachable", "startup_only"))
     entries = analysis.get("entry_points", [])
     return {
@@ -182,6 +208,7 @@ def summarize(analysis: Dict[str, Any], findings: List[Dict[str, Any]], model: D
         "analysis_mode": analysis.get("mode"),
         "findings_total": total,
         "actionable": actionable,
+        "attack_simulations": simulated,
         "deprioritized": deprioritized,
         "noise_reduction_pct": round(100.0 * deprioritized / total, 1) if total else 0.0,
         "by_risk_category": dict(by_cat),
@@ -261,11 +288,18 @@ def _run_scan_locked(scan_id: str, project_id: str, entry_points: Optional[List[
 
         _stage(scan_id, "Prioritizing findings", 82)
         findings = build_findings(analysis, ai_probs, model, target, extra)
+
+        _stage(scan_id, "Checking npm dependencies against OSV", 86)
+        dep_findings, dep_summary = dependency_check.check(target, analysis)
+        if dep_findings:
+            findings = sorted(findings + dep_findings, key=lambda x: x["risk_score"], reverse=True)
         nodes = graph_nodes(analysis, findings, ai_probs)
 
         _stage(scan_id, "Saving results", 92)
         duration_ms = int((time.time() - started) * 1000)
         summary = summarize(analysis, findings, model, duration_ms)
+        summary["dependencies"] = dep_summary
+        summary["server_port"] = (analysis.get("server") or {}).get("port")
         save_scan_results(scan_id, nodes, analysis.get("edges", []), analysis.get("entry_points", []), findings)
         update_scan(
             scan_id, status="completed", stage="Completed", progress=100, finding_count=len(findings),

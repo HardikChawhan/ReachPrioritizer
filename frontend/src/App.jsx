@@ -13,6 +13,7 @@ import { TourProvider } from './tour/Tour'
 import { Compass, TriangleAlert } from 'lucide-react'
 
 const CallGraph = lazy(() => import('./pages/CallGraph'))
+const Compare = lazy(() => import('./pages/Compare'))
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null } }
@@ -50,6 +51,7 @@ function Routed() {
             <Route path="/scans/:scanId" element={<ScanResults />} />
             <Route path="/scans/:scanId/findings/:findingId" element={<FindingDetail />} />
             <Route path="/scans/:scanId/graph" element={<CallGraph />} />
+            <Route path="/compare" element={<Compare />} />
             <Route path="/research" element={<Research />} />
             <Route path="/model" element={<Research />} />
             <Route path="/learn" element={<Learn />} />

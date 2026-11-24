@@ -61,21 +61,28 @@ Source code is only **parsed, never executed**.
 - **Interprocedural taint tracking** from user-input sources to sinks, aware of sanitizers and guard clauses, across functions and files.
 - **20+ rules / 15 CWE classes:** command injection, code injection (`eval`, `vm`, `mathjs`), SQL and NoSQL injection, path traversal, SSRF, open redirect, reflected / DOM XSS, prototype pollution, XXE, insecure deserialization, ReDoS, hardcoded secrets, weak crypto, disabled TLS verification.
 
+**Attack simulator, dependency check, GitHub and compare** (new in v2.1)
+- **Attack simulator:** for every finding where user input reaches the bug, the exact attacker request (curl / fetch / raw HTTP, with the full URL including router mount prefixes and the real input field) plus a step-by-step replay that ends with what the server would execute, e.g. `SELECT … LIKE '%' OR '1'='1' -- %'`. Simulation only: nothing is sent.
+- **Reachable dependency check:** `package.json` / lockfile versions are looked up in the **OSV** database (CVE / GHSA advisories), then the call graph decides whether the vulnerable package is actually called from a reachable route, with user input, and whether the advisory's function (e.g. `lodash.template`) is the one being called.
+- **Scan from a GitHub link:** paste `https://github.com/owner/repo` (optional branch / tag); the archive is downloaded with the same safety checks as an upload, and the commit SHA is recorded.
+- **Compare scans:** upload a new version (or pull the latest commit) and see **fixed / new / still-open** findings, both **call graphs side by side** with the attack path of any finding lit up in both versions, route and reachability changes, and a trend chart.
+
 **AI**
 - Function-level classifier trained on **21,896** real JavaScript functions (JsVul, repository-disjoint splits).
-- TF-IDF + Logistic Regression is active (test F1 0.40). **CodeBERT** was fine-tuned on an RTX 4060 (22.6 min) and reached test F1 0.35, so the measured-F1 policy keeps TF-IDF. The best model is always picked automatically by its **measured** test F1.
+- TF-IDF + Logistic Regression shipped; **CodeBERT** GPU training script included. The best model is picked automatically by its **measured** test F1.
 
 **Prioritization**
 - `risk = 100 × reachability × (0.45·severity + 0.35·exploitability + 0.20·AI)`, with a full breakdown for every finding.
 
 **Web app**
-- Upload a ZIP, follow live progress, browse ranked findings with filters, and open any finding for its **attack path**, **data flow**, highlighted code, score breakdown and fix advice.
+- Upload a ZIP or paste a GitHub link, follow live progress, browse ranked findings with filters, and open any finding for its **attack simulation**, **attack path**, **data flow**, highlighted code, score breakdown and fix advice.
 - Interactive **call graph** with path highlighting.
-- **Guided tour** (25 steps across every page), a **Learn** knowledge base with an interactive risk calculator, and "?" explainers on every panel.
+- **Compare** page with side-by-side call graphs and a trend chart.
+- **Guided tour** (30 steps across every page), a **Learn** knowledge base with an interactive risk calculator, and "?" explainers on every panel.
 - Exports: **JSON, SARIF 2.1.0** (GitHub code scanning / VS Code) and **CSV**.
 
 **Engineering**
-- Safe ZIP handling (path traversal, symlinks, zip bombs, size limits), background scans with progress, SQLite schema with per-scan graphs, environment-based configuration, and 30 automated tests.
+- Safe ZIP handling (path traversal, symlinks, zip bombs, size limits), background scans with progress, SQLite schema with per-scan graphs, environment-based configuration, and 47 automated tests.
 
 ---
 
@@ -150,11 +157,12 @@ Open **http://localhost:5173** and accept the guided tour. Then click **New scan
 ## Using it
 
 ### In the browser
-1. **New scan**: upload a `.zip` of a JS/TS/Node project (≤ 100 MB; `node_modules`, tests and build files are ignored).
-2. **Scan results**: read the list top-down. "Actionable" findings are reachable and have proven user input. Use the filters for risk, reachability and data flow.
-3. **Finding detail**: the attack path, data flow, code, score breakdown and how to fix it.
+1. **New scan**: upload a `.zip` of a JS/TS/Node project (≤ 100 MB; `node_modules`, tests and build files are ignored) **or paste a public GitHub link**.
+2. **Scan results**: read the list top-down. "Actionable" findings are reachable and have proven user input. Use the filters for risk, reachability, data flow and type (code / dependency / AI).
+3. **Finding detail**: the attack simulator (press **Replay attack**), attack path, data flow, code, score breakdown and how to fix it. Dependency findings show the advisories, where the package is called and the upgrade command.
 4. **Call graph**: click a red node to light up the path from an entry point.
-5. **Export**: SARIF for GitHub code scanning, JSON for tooling, CSV for spreadsheets.
+5. **New version → Compare**: after fixing, scan the new code and open **Compare with previous**. Demo: scan `test-applications/express-app.zip`, then upload `test-applications/express-app-v2.zip` as its new version.
+6. **Export**: SARIF for GitHub code scanning, JSON for tooling, CSV for spreadsheets.
 
 Lost? Click **Tour** in the header, open **Learn**, or press any **?** button.
 
@@ -166,9 +174,11 @@ node analyzer/analyze.js --project path/to/app --pretty > analysis.json
 ### Through the API
 ```bash
 curl -F file=@test-applications/express-app.zip http://127.0.0.1:8000/api/projects/upload
+curl -H "Content-Type: application/json" -d '{"url":"https://github.com/OWASP/NodeGoat"}' http://127.0.0.1:8000/api/projects/from-github
 curl http://127.0.0.1:8000/api/scans/<scan_id>
 curl "http://127.0.0.1:8000/api/scans/<scan_id>/findings?reachability=reachable&taint=user_input"
 curl -o report.sarif "http://127.0.0.1:8000/api/scans/<scan_id>/export?format=sarif"
+curl http://127.0.0.1:8000/api/scans/<old_scan_id>/compare/<new_scan_id>
 ```
 Full reference: [docs/BACKEND_API.md](docs/BACKEND_API.md).
 
@@ -200,6 +210,8 @@ flowchart LR
 5. **Taint.** Values from `req.body/query/params/headers/cookies…` are followed through assignments, string building and calls (with per-parameter summaries across functions). Reaching a sink without a sanitizer or guard creates a finding.
 6. **AI.** Each function gets a vulnerability probability.
 7. **Score.** `100 × reachability (1.0 / 0.4 / 0.2) × (0.45·severity + 0.35·exploitability + 0.20·AI)`.
+8. **Attack simulation.** From the route (with mount prefixes), the input label (`query.file`, `body.term`, …) and a template of the sink value (`SELECT … '{{INPUT}}'`), the backend writes the attack request and the resulting query / command.
+9. **Dependencies.** Package versions → OSV advisories → which functions call the package, and whether those are reachable.
 
 Deep dives: [Architecture](docs/ARCHITECTURE.md) · [Analysis engine](docs/ANALYSIS_ENGINE.md) · [AI model](docs/AI_MODEL_AND_TRAINING.md).
 
@@ -212,6 +224,10 @@ Deep dives: [Architecture](docs/ARCHITECTURE.md) · [Analysis engine](docs/ANALY
 | ![Scan results](docs/images/scan-results.jpg) | ![Finding detail](docs/images/finding-detail.jpg) |
 | **Interactive call graph** | **Guided tour** |
 | ![Call graph](docs/images/call-graph.jpg) | ![Guided tour](docs/images/guided-tour.jpg) |
+| **Attack simulator** | **Compare scans side by side** |
+| ![Attack simulator](docs/images/attack-simulator.jpg) | ![Compare](docs/images/compare.jpg) |
+| **Scan from GitHub** | **Reachable dependency check** |
+| ![GitHub](docs/images/github-scan.jpg) | ![Dependency](docs/images/dependency.jpg) |
 | **Model & research** | **Learn + risk calculator** |
 | ![Research](docs/images/research.jpg) | ![Learn](docs/images/learn.jpg) |
 
@@ -253,7 +269,7 @@ File-by-file: [docs/REPOSITORY_GUIDE.md](docs/REPOSITORY_GUIDE.md).
 
 ```bash
 npm run test:analyzer                          # 11 engine tests (ground truth + focused cases)
-cd backend && python -m pytest                 # 19 API / pipeline / safety / scoring tests
+cd backend && python -m pytest                 # 36 API / pipeline / safety / scoring / feature tests
 python evaluation/scripts/run_experiments.py   # regenerate evaluation/results/*
 
 # optional extras for the evaluation
@@ -267,7 +283,7 @@ The JsVul dataset is larger than GitHub's file limit and is rebuilt on demand:
 ```bash
 bash scripts/fetch_dataset.sh             # JsVul @036c7f7 -> data/processed (seed 42)
 python ai/training/train_fallback.py      # TF-IDF, CPU, ~1 min
-python ai/training/train_codebert.py      # CodeBERT, GPU (22.6 min measured on an RTX 4060 laptop)
+python ai/training/train_codebert.py      # CodeBERT, GPU (~45–90 min on an RTX 4060)
 ```
 
 GPU setup for RTX 4060 / 5070 Ti laptops: [docs/AI_MODEL_AND_TRAINING.md](docs/AI_MODEL_AND_TRAINING.md).
@@ -297,15 +313,18 @@ GPU setup for RTX 4060 / 5070 Ti laptops: [docs/AI_MODEL_AND_TRAINING.md](docs/A
 **Limitations**
 - Static analysis cannot see every dynamic JavaScript pattern (computed method names, DI containers, generated code).
 - Taint tracking is flow-insensitive inside a function, and object-field aliasing is approximated.
-- Out of scope: template-level XSS, authentication/authorization logic, and vulnerable dependencies (`node_modules` is not analyzed).
+- Out of scope: template-level XSS and authentication/authorization logic. Dependencies are checked by version (OSV) and by how the app calls them; the code inside `node_modules` is not analyzed.
+- Without a lockfile, a dependency's version is the lowest one its `package.json` range allows, which can over-report.
+- GitHub import works for public repositories only.
 - No built-in authentication: run it locally or behind your own proxy.
 
 **Roadmap**
-- Improve the transformer model (UniXcoder, longer context): CodeBERT currently trails TF-IDF on unseen projects.
+- Train and benchmark CodeBERT / UniXcoder on GPU.
 - Larger benchmarks (SecBench.js, CVE-linked npm packages).
 - Field- and flow-sensitive taint; library summaries for ORMs and template engines.
-- Dependency reachability (are vulnerable npm functions reachable from app code?).
-- GitHub Action that posts risk-ranked SARIF.
+- Live exploit verification in an isolated sandbox (Docker, no network), building on the attack simulator.
+- Private GitHub repositories (token) and a GitHub Action that posts risk-ranked SARIF on every pull request.
+- More languages (Python first) behind the same JSON contract.
 
 ---
 

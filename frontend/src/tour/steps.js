@@ -45,6 +45,11 @@ export function buildSteps(ctx) {
       body: 'Drag a .zip here (up to 100 MB). node_modules, tests and build files are skipped automatically. Code is only parsed, never executed. The scan starts immediately and usually takes a few seconds.',
     },
     {
+      route: '/scan/new', target: 'github-tab', optional: true,
+      title: 'Or paste a GitHub link',
+      body: 'No ZIP needed: paste the link of a public GitHub repository (for example github.com/OWASP/NodeGoat) and an optional branch. The repository is downloaded with the same safety checks and scanned straight away.',
+    },
+    {
       route: '/scan/new', target: 'scan-info', optional: true,
       title: 'What gets analyzed',
       body: 'Supported languages and frameworks, plus the safety checks run on every archive before it is unpacked.',
@@ -55,7 +60,7 @@ export function buildSteps(ctx) {
     steps.push({
       route: '/scan/new', target: 'dropzone',
       title: 'Scan something to unlock the rest of the tour',
-      body: 'There are no completed scans yet. Upload test-applications/express-app.zip from the repository, then start the tour again from the "Tour" button to see the results, the attack paths and the call graph.',
+      body: 'There are no completed scans yet. Upload test-applications/express-app.zip from the repository (or paste a GitHub link), then start the tour again from the "Tour" button to see the results, the attack paths and the call graph.',
     })
   } else {
     steps.push(
@@ -68,6 +73,21 @@ export function buildSteps(ctx) {
         route: scan, target: 'scan-stats',
         title: 'The four numbers that matter',
         body: 'Actionable = reachable + user input proven. Findings = everything detected. Deprioritized = the share of findings in dead or startup-only code. Code analyzed = the size of the call graph.',
+      },
+      {
+        route: scan, target: 'attack-strip', optional: true,
+        title: 'Attack simulations',
+        body: 'How many findings come with a ready-made attack: the exact request an attacker would send and a step-by-step replay. Click to show only the findings where user input reaches the bug.',
+      },
+      {
+        route: scan, target: 'deps-strip', optional: true,
+        title: 'Dependency check',
+        body: 'Your npm packages are checked against the public OSV vulnerability database, and the call graph tells whether your code actually uses the vulnerable package from a reachable route. Click to list only dependency findings.',
+      },
+      {
+        route: scan, target: 'compare-btn', optional: true,
+        title: 'Compare with the previous scan',
+        body: 'After you fix something, scan the new version ("New version" button) and compare: fixed, new and still-open findings, with both call graphs side by side.',
       },
       {
         route: scan, target: 'risk-dist',
@@ -96,6 +116,11 @@ export function buildSteps(ctx) {
           route: finding, target: 'finding-header',
           title: 'Finding detail',
           body: 'The vulnerability type (with its CWE id), the location, and badges: risk category, reachability, data flow, severity and which detector found it. The sentence below explains the problem in plain words.',
+        },
+        {
+          route: finding, target: 'attack-sim', optional: true,
+          title: 'Attack simulator',
+          body: 'The request an attacker would send (copy it as curl, JavaScript or raw HTTP) and a replay of the attack: press "Replay attack" to watch the payload travel from the route to the dangerous line, and see the exact query or command the server would run. It is only a simulation — nothing is sent.',
         },
         {
           route: finding, target: 'attack-path',

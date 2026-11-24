@@ -384,12 +384,14 @@ class Project {
     }
 
     // Request entry points: route handlers + server request callbacks
+    this.computeMounts();
     const request = [];
     for (const [rel, F] of this.files) {
       for (const r of F.routes) {
+        const full = typeof r.route === 'string' && r.route.startsWith('/') ? joinPath(this.prefixOf(rel, r.receiver), r.route) : r.route;
         for (const h of r.handlers) {
           const ids = this.handlerIds(F, r.registeredIn, h);
-          for (const id of ids) request.push({ id, kind: 'route', label: `${r.method} ${r.route}`, registeredIn: r.registeredIn, file: rel, line: r.line });
+          for (const id of ids) request.push({ id, kind: 'route', label: `${r.method} ${full}`, method: r.method, path: full, registeredIn: r.registeredIn, file: rel, line: r.line });
         }
       }
       for (const s of F.serverRoots) {
@@ -427,6 +429,74 @@ class Project {
     this.mode = request.length ? mode : 'module';
     this.startupRoots = startup;
     this.requestRoots = request;
+  }
+
+  /** Where each router is mounted: app.use('/api/files', fileRoutes). */
+  computeMounts() {
+    this.mountsInto = new Map(); // `${rel}|${receiver or *}` -> [{prefix, fromRel, receiver}]
+    const add = (key, m) => { if (!this.mountsInto.has(key)) this.mountsInto.set(key, []); this.mountsInto.get(key).push(m); };
+    for (const [rel, F] of this.files) {
+      for (const m of F.mounts || []) {
+        const info = { prefix: m.prefix, fromRel: rel, receiver: m.receiver };
+        if (m.spec) {
+          const tgt = this.resolveModule(rel, m.spec);
+          if (tgt) add(`${tgt}|*`, info);
+        } else if (m.targetChain) {
+          const b = F.bindings.get(m.targetChain[0]);
+          if (b && b.local) {
+            const tgt = this.resolveModule(rel, b.module);
+            if (tgt) add(`${tgt}|*`, info);
+          } else if (!b) {
+            add(`${rel}|${m.targetChain.join('.')}`, info);
+          }
+        }
+      }
+    }
+  }
+
+  prefixOf(rel, receiver, depth = 0) {
+    if (depth > 8 || !this.mountsInto) return '';
+    const list = (receiver && this.mountsInto.get(`${rel}|${receiver}`)) || this.mountsInto.get(`${rel}|*`);
+    if (!list || !list.length) return '';
+    const m = list[0];
+    if (m.fromRel === rel && m.receiver === receiver) return m.prefix;
+    return joinPath(this.prefixOf(m.fromRel, m.receiver, depth + 1), m.prefix);
+  }
+
+  /** Port the server most likely listens on (for generated attack requests). */
+  guessPort() {
+    // database / cache ports often sit next to the app port in config files
+    const DB_PORTS = new Set([3306, 5432, 27017, 6379, 1433, 1521, 9200, 5672, 11211, 26257]);
+    const ok = (p) => !DB_PORTS.has(p);
+    for (const F of this.files.values()) if (F.indicators.listen) { const p = F.portHints.find(ok); if (p) return p; }
+    for (const F of this.files.values()) { const p = F.portHints.find(ok); if (p) return p; }
+    return 3000;
+  }
+
+  /** npm packages the code calls, and from which functions (dependency reachability). */
+  dependencyUsage() {
+    const usage = new Map();
+    for (const F of this.files.values()) {
+      for (const rec of F.callRecords) {
+        if (!rec.external) continue;
+        const pkg = packageName(rec.external);
+        if (!pkg || BUILTINS.has(pkg)) continue;
+        if (!usage.has(pkg)) usage.set(pkg, []);
+        const list = usage.get(pkg);
+        if (list.length < 200) list.push({ caller: rec.caller, api: rec.api, line: rec.line, file: F.relPath, user_input: !!rec.userArg });
+      }
+      for (const fr of F.frameById.values()) {
+        for (const imp of fr.imports || []) {
+          const pkg = packageName(imp.spec);
+          if (!pkg || BUILTINS.has(pkg) || imp.spec.startsWith('.')) continue;
+          if (!usage.has(pkg)) usage.set(pkg, []);
+          usage.get(pkg).push({ caller: fr.id, api: `import ${imp.spec}`, line: imp.line, file: F.relPath, user_input: false, import: true });
+        }
+      }
+    }
+    const out = {};
+    for (const [pkg, uses] of usage) out[pkg] = uses;
+    return out;
   }
 
   handlerIds(F, frameId, h) {
@@ -491,7 +561,7 @@ class Project {
         if (root && root.registeredIn && startupParent.has(root.registeredIn)) prefix = Project.pathTo(startupParent, root.registeredIn);
         const full = [...prefix];
         for (const n of tail) if (!full.includes(n)) full.push(n);
-        this.reach.set(id, { status: 'reachable', path: full, entry: root ? { kind: root.kind, label: root.label } : null });
+        this.reach.set(id, { status: 'reachable', path: full, entry: root ? { kind: root.kind, label: root.label, method: root.method || null, path: root.path || null } : null });
       } else if (startupParent.has(id)) {
         this.reach.set(id, {
           status: this.mode === 'module' ? 'reachable' : 'startup_only',
@@ -531,7 +601,7 @@ class Project {
           rec.argOrigins.forEach((origins, i) => {
             const k = `${t}|${i}`;
             for (const o of origins) {
-              if (o === 'U') seeds.push({ key: k, caller: rec.caller, line: rec.line });
+              if (o === 'U') seeds.push({ key: k, caller: rec.caller, line: rec.line, sources: origins.filter((x) => x.startsWith('S|')).map((x) => x.slice(2)) });
               else if (o.startsWith('P|')) {
                 const [, pf, pi] = o.split('|');
                 const from = `${pf}|${pi}`;
@@ -546,7 +616,7 @@ class Project {
     // BFS over parameter flows from user-input call sites
     const pred = new Map();
     const queue = [];
-    for (const s of seeds) if (!pred.has(s.key)) { pred.set(s.key, { from: null, caller: s.caller, line: s.line }); queue.push(s.key); }
+    for (const s of seeds) if (!pred.has(s.key)) { pred.set(s.key, { from: null, caller: s.caller, line: s.line, sources: s.sources }); queue.push(s.key); }
     for (let i = 0; i < queue.length; i++) {
       const k = queue[i];
       for (const f of flows.get(k) || []) {
@@ -558,12 +628,17 @@ class Project {
         if (f.taint === 'user_input') continue;
         // reconstruct the function chain that carries the input
         const chain = [];
-        let cur = k; let guard = 0;
+        const hops = [];
+        let cur = k; let guard = 0; let sources = [];
         while (cur && guard++ < 50) {
           const p = pred.get(cur);
           chain.push(p.caller);
+          hops.push({ caller: p.caller, line: p.line });
+          if (!p.from) sources = p.sources || [];
           cur = p.from;
         }
+        f.sources = sources;
+        f.taint_hops = hops.reverse();
         chain.reverse();
         chain.push(f.function_id);
         f.taint = 'user_input';
@@ -623,7 +698,7 @@ class Project {
     for (const n of nodes) if (n.node_type !== 'Module') counts[n.reachability] = (counts[n.reachability] || 0) + 1;
     const entryPoints = [
       ...[...this.startupRoots.entries()].map(([id, reason]) => ({ id, kind: 'startup', label: reason, active: true, file: id.split('::')[0], line: 1 })),
-      ...this.requestRoots.map((r) => ({ id: r.id, kind: r.kind, label: r.label, active: !!r.active, file: r.file, line: r.line, registered_in: r.registeredIn })),
+      ...this.requestRoots.map((r) => ({ id: r.id, kind: r.kind, label: r.label, method: r.method || null, path: r.path || null, active: !!r.active, file: r.file, line: r.line, registered_in: r.registeredIn })),
     ];
     const unresolved = [...this.unresolved.entries()].sort((a, b) => b[1] - a[1]).slice(0, 50).map(([name, count]) => ({ name, count }));
     return {
@@ -632,6 +707,8 @@ class Project {
       project_dir: this.dir,
       generated_at: new Date().toISOString(),
       mode: this.mode,
+      server: { port: this.guessPort() },
+      dependency_usage: this.dependencyUsage(),
       stats: {
         files_found: this.fileList.length + this.parseErrors.filter((e) => !e.recovered).length,
         files_analyzed: this.fileList.length,
@@ -652,6 +729,22 @@ class Project {
       unresolved_calls: unresolved,
     };
   }
+}
+
+function joinPath(a, b) {
+  const left = (a || '').replace(/\/+$/, '');
+  if (!b || b === '/') return left || '/';
+  return `${left}${b.startsWith('/') ? '' : '/'}${b}`;
+}
+
+const BUILTINS = new Set(['fs', 'path', 'os', 'http', 'https', 'http2', 'net', 'tls', 'dns', 'url', 'util', 'crypto', 'child_process', 'events',
+  'stream', 'zlib', 'querystring', 'buffer', 'assert', 'vm', 'cluster', 'worker_threads', 'readline', 'process', 'timers', 'string_decoder', 'module', 'perf_hooks', 'v8', 'tty', 'dgram']);
+
+function packageName(spec) {
+  if (!spec || spec.startsWith('.') || spec.startsWith('/')) return null;
+  const s = spec.replace(/^node:/, '');
+  const parts = s.split('/');
+  return s.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
 }
 
 function analyzeProject(projectDir, options = {}) {

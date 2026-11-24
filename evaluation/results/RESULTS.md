@@ -1,6 +1,6 @@
 # ReachPrioritizer — evaluation results
 
-Generated 2026-11-22T14:46:26.807291+00:00 by `evaluation/scripts/run_experiments.py` (do not edit by hand).
+Generated 2026-11-24T13:46:02.572851+00:00 by `evaluation/scripts/run_experiments.py` (do not edit by hand).
 AI model: **TF-IDF + Logistic Regression** (threshold 0.5).
 
 ## A. Detection on the controlled applications (function level, pooled)
@@ -36,7 +36,7 @@ Accuracy **1.000**, precision 1.000, recall 1.000, F1 1.000 (TP 38, FP 0, FN 0, 
 | vulnerable-app | 6 | 24 | 9 | 8 | 6 | 1.000 | 1.000 | 1.000 | 1.000 |
 | secure-app | 6 | 25 | 8 | 0 | 0 | 1.000 | 1.000 | – | – |
 | mixed-app | 7 | 32 | 10 | 5 | 1 | 1.000 | 1.000 | 1.000 | 1.000 |
-| express-app | 12 | 25 | 16 | 9 | 6 | 1.000 | 1.000 | 1.000 | 1.000 |
+| express-app | 12 | 26 | 16 | 9 | 6 | 1.000 | 1.000 | 1.000 | 1.000 |
 | NodeGoat | 26 | 115 | 5 | 5 | 5 | recall 1.000 | 1.000 | 1.000 | 1.000 |
 | dvna | 12 | 74 | 6 | 6 | 6 | recall 1.000 | 1.000 | 1.000 | 1.000 |
 

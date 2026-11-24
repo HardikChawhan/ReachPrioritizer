@@ -28,15 +28,17 @@ export const api = {
   stats: () => request('/stats'),
   projects: () => request('/projects'),
   deleteProject: (id) => request(`/projects/${id}`, { method: 'DELETE' }),
-  upload(file, name, onProgress) {
-    // XHR for upload progress
+  upload(file, name, onProgress, projectId = null) {
+    // XHR for upload progress. With projectId: a new version of an existing project.
     return new Promise((resolve, reject) => {
       const fd = new FormData()
       fd.append('file', file)
-      if (name) fd.append('name', name)
-      fd.append('auto_scan', 'true')
+      if (projectId) { if (name) fd.append('label', name) } else {
+        if (name) fd.append('name', name)
+        fd.append('auto_scan', 'true')
+      }
       const xhr = new XMLHttpRequest()
-      xhr.open('POST', `${BASE}/projects/upload`)
+      xhr.open('POST', projectId ? `${BASE}/projects/${projectId}/version` : `${BASE}/projects/upload`)
       xhr.upload.onprogress = (e) => e.lengthComputable && onProgress && onProgress(e.loaded / e.total)
       xhr.onload = () => {
         let body = {}
@@ -48,6 +50,12 @@ export const api = {
       xhr.send(fd)
     })
   },
+  fromGithub: (url, branch, name) => request('/projects/from-github', json('POST', { url, branch: branch || null, name: name || null })),
+  refreshGithub: (projectId) => request(`/projects/${projectId}/refresh`, { method: 'POST' }),
+  project: (id) => request(`/projects/${id}`),
+  trend: (projectId) => request(`/projects/${projectId}/trend`),
+  previousScan: (id) => request(`/scans/${id}/previous`),
+  compare: (baseId, headId) => request(`/scans/${baseId}/compare/${headId}`),
   startScan: (projectId) => request('/scans', json('POST', { project_id: projectId })),
   scans: (projectId) => request(`/scans${projectId ? `?project_id=${projectId}` : ''}`),
   scan: (id) => request(`/scans/${id}`),

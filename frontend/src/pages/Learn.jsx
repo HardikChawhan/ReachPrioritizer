@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   BookOpen, Compass, Crosshair, FileSearch, GitBranch, HelpCircle, LayoutDashboard, ListChecks, Network,
-  Radar, Route, ShieldAlert, Sigma, Sparkles, Upload, Workflow,
+  Radar, Route, ShieldAlert, Sigma, Sparkles, Upload, Workflow, Swords, Package, GitCompareArrows, Github,
 } from 'lucide-react'
 import { Card, Label, PageHeader, Pill, ReachBadge, RiskBadge, RiskRing, TaintBadge } from '../components/ui'
 import { useTour } from '../tour/Tour'
@@ -16,6 +16,10 @@ const SECTIONS = [
   ['reachability', 'Reachability'],
   ['taint', 'Taint / data flow'],
   ['attack-path', 'Attack path'],
+  ['attack-sim', 'Attack simulator'],
+  ['dependencies', 'Dependency check'],
+  ['compare', 'Compare scans'],
+  ['github', 'Scan from GitHub'],
   ['ai-model', 'The AI model'],
   ['risk-score', 'Risk score (try it)'],
   ['badges', 'Reading the badges'],
@@ -87,7 +91,8 @@ function Calculator() {
 }
 
 const FAQ = [
-  ['Is my code executed or sent anywhere?', 'No. The code is only parsed into a syntax tree on the machine running the backend. Nothing is executed, and nothing is sent to an external service.'],
+  ['Is my code executed or sent anywhere?', 'No. The code is only parsed into a syntax tree on the machine running the backend; nothing is executed. The only outside call is the dependency check, which sends package names and versions (not code) to osv.dev. Set RP_ENABLE_DEPCHECK=0 to turn it off.'],
+  ['Does the attack simulator attack my app?', 'No. It only writes down the request an attacker would send and shows, step by step, how the payload would travel. Nothing is sent. You can copy the request and try it against your own local copy.'],
   ['Which languages and frameworks are supported?', 'JavaScript and TypeScript (.js .mjs .cjs .jsx .ts .tsx). Entry points are recognized for Express, Koa, Fastify, hapi, Node http/https servers, serverless handlers and Next.js API routes.'],
   ['Why does a "critical" vulnerability get a low score?', 'Because nothing can reach it: no route or start-up code ever calls that function (dead code), or it only runs while the application boots. It is still listed, so it can be cleaned up, but after the reachable issues.'],
   ['What does "AI only" mean?', 'The machine-learning model thinks the function looks vulnerable (≥ 85% probability), but no rule found a concrete flow from input to a dangerous call. Treat it as a hint for manual review.'],
@@ -100,6 +105,9 @@ const FAQ = [
 const GLOSSARY = [
   ['AST', 'Abstract Syntax Tree — the program parsed into a tree structure the analyzer can walk.'],
   ['Call graph', 'A graph of which function calls which.'],
+  ['CVE', 'Common Vulnerabilities and Exposures — the public ID of one specific known bug in one product (e.g. CVE-2021-23337 in lodash).'],
+  ['OSV', 'Open Source Vulnerabilities — a free database by Google that maps package versions to known CVEs / advisories.'],
+  ['Payload', 'The malicious value an attacker puts into a request, e.g. \' OR \'1\'=\'1 for SQL injection.'],
   ['CWE', 'Common Weakness Enumeration — a standard ID for a type of vulnerability (e.g. CWE-89 = SQL injection).'],
   ['Entry point', 'Where execution starts: server start-up code, or a route handler that receives requests.'],
   ['Exploitable', 'Reachable from an entry point AND fed with attacker-controlled data.'],
@@ -222,6 +230,30 @@ function runCommand(cmd) {
           <Section id="attack-path" icon={Route} title="Attack path">
             <p>For a reachable finding, the <b className="font-medium text-fog-50">attack path</b> is the shortest chain of calls from where the application starts, through the route the attacker calls, down to the vulnerable function. It answers "how would someone get here?" and shows exactly which route to protect or test.</p>
             <Code>{`app.js (module load)  →  setupFileRoutes  →  GET /execute: executeCommand  →  executeCmd  →  runCommand  ☠`}</Code>
+          </Section>
+
+          <Section id="attack-sim" icon={Swords} title="Attack simulator">
+            <p>For every finding where user input reaches the bug, ReachPrioritizer writes the <b className="font-medium text-fog-50">exact request an attacker would send</b> — as curl, JavaScript fetch and raw HTTP — and plays the attack step by step: the request arrives, the route handler reads the input, the value is passed from function to function, and it lands in the dangerous line.</p>
+            <p>The last step shows <b className="font-medium text-fog-50">what the server would really execute</b>, with the attacker's part highlighted. Everything comes from what the engine proved: the full URL (router mount prefixes included), the input field (for example <code>req.query.file</code>) and the code around the sink.</p>
+            <Code>{`curl -i -X POST -H 'Content-Type: application/json' --data '{"term": "' OR '1'='1' -- "}' http://localhost:3005/api/users/search
+
+→ SELECT id, name FROM users WHERE name LIKE '%' OR '1'='1' -- %'`}</Code>
+            <p>It is a <b className="font-medium text-fog-50">simulation</b>: nothing is ever sent or executed. The verdict says whether the request would really work today (<i>exploitable</i>), only at startup (<i>internal</i>), or never because no route leads there (<i>blocked</i>). Only test the request against your own local copy.</p>
+          </Section>
+
+          <Section id="dependencies" icon={Package} title="Dependency check">
+            <p>Most real attacks come through outdated npm packages. ReachPrioritizer reads <code>package.json</code> (and <code>package-lock.json</code> for exact versions) and asks <b className="font-medium text-fog-50">OSV</b>, Google's open vulnerability database, which versions have known CVEs.</p>
+            <p>Then comes the part other tools skip: the call graph shows <b className="font-medium text-fog-50">whether your code actually calls the package from a reachable route</b>, whether user input is passed in, and whether it calls the very function named in the advisory (for example <code>lodash.template</code>). A package that is listed but never imported is ranked low; one called from a live route with request data is ranked critical.</p>
+            <p>Only package names and versions are sent to osv.dev — never your code. Without internet the check is skipped and the rest of the scan works normally.</p>
+          </Section>
+
+          <Section id="compare" icon={GitCompareArrows} title="Compare scans">
+            <p>Scan a project, fix some bugs, then scan the <b className="font-medium text-fog-50">new version</b> (upload a new ZIP or pull the latest commit from GitHub). The Compare page matches findings by function and weakness type and sorts them into <span className="text-lime">Fixed</span>, <span className="text-[#ff8a95]">New</span> and <span className="text-[#ffb27a]">Still open</span>.</p>
+            <p>Both call graphs are drawn <b className="font-medium text-fog-50">side by side</b>. Select a finding and its attack path lights up in both versions, so you can see that a path was cut, moved or newly opened. It also lists new or removed routes, functions that became reachable, and a trend chart across all scans of the project.</p>
+          </Section>
+
+          <Section id="github" icon={Github} title="Scan from GitHub">
+            <p>Paste a public repository link such as <code>https://github.com/OWASP/NodeGoat</code> (optionally a branch or tag). The backend downloads the repository archive from GitHub, applies the same safety checks as a ZIP upload, and scans it. The commit id is recorded, and "New version" pulls the latest commit for a before/after comparison.</p>
           </Section>
 
           <Section id="ai-model" icon={Sparkles} title="The AI model">

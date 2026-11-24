@@ -134,6 +134,18 @@ Two multi-source BFS passes over all edges:
 
 Rules that need data flow fire only when the relevant arguments carry taint. Configuration rules (secrets, crypto, TLS) have taint `none`.
 
+### 9. Data for the attack simulator and the dependency check
+
+The engine records a few extra facts that the backend turns into attack simulations and dependency rankings:
+
+| Output | How it is computed |
+|---|---|
+| Full route paths | `app.use('/api/files', fileRoutes)` and `app.use('/api', require('./routes'))` are recorded as *mounts*. Every route registered on a mounted router gets the prefix (mounts are followed recursively), so the entry label becomes `GET /api/files/download` instead of `GET /download`. Entry points carry `method` and `path`. |
+| Source labels | User-input taint carries a label next to the `U` marker: `req.query.file` → `query.file`, `req.get('X-Token')` → `headers.x-token`, `const { term } = req.body` → `body.term`. Findings list them in `sources`; across functions the label of the call site that started the flow is kept, together with `taint_hops` (caller + line of every hop). |
+| Sink templates | The dangerous value with the attacker's part marked: `` `SELECT … LIKE '%${term}%'` `` → `SELECT … LIKE '%{{INPUT}}%'`. Variables are followed to their declaration, `path.join(base, x)` becomes `${base}/{{INPUT}}`, untainted parts are kept as `${code}`. Stored as `template`. |
+| Server port | First numeric port found in `listen(...)`, a `port` property or a `*port*` variable (`process.env.PORT \|\| 3005` → 3005); default 3000. Output as `server.port`. |
+| Dependency usage | Every call whose callee resolves to an npm package binding (`const _ = require('lodash'); _.template(x)`), with the calling function, the API (`lodash.template`), the line and whether user input is passed in, plus plain imports. Output as `dependency_usage{package: [...]}`. |
+
 ### 8. Merge and output
 Findings are merged per `(function, CWE)`. The engine keeps the strongest evidence (`user_input` > `parameter` > `none`, then severity) and collects every related line. Each finding carries `call_path` and `taint_path`.
 

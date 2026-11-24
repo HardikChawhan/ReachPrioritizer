@@ -1,6 +1,8 @@
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, BrainCircuit, Crosshair, Lightbulb, Network, Route, Workflow } from 'lucide-react'
 import AttackPath from '../components/AttackPath'
+import AttackSimulator from '../components/AttackSimulator'
+import DependencyPanel from '../components/DependencyPanel'
 import CodeView from '../components/CodeView'
 import { Card, ErrorState, InfoHint, Label, Pill, ReachBadge, RiskBadge, RiskRing, Skeleton, TaintBadge, useAsync } from '../components/ui'
 import { api } from '../lib/api'
@@ -11,7 +13,9 @@ function Breakdown({ f }) {
   const rows = [
     { label: 'Severity', weight: '45%', value: b.severity_weight, contrib: b.severity_contribution, note: SEVERITY_LABEL[f.severity] || f.severity, color: '#FF9442' },
     { label: 'Exploitability', weight: '35%', value: b.exploitability_weight, contrib: b.exploitability_contribution, note: (TAINT[f.taint] || TAINT.unknown).label, color: '#FF4D5E' },
-    { label: 'AI probability', weight: '20%', value: b.ai_probability, contrib: b.ai_contribution, note: pct(f.vulnerability_probability), color: '#B4FF39' },
+    f.dependency
+      ? { label: 'Usage evidence', weight: '20%', value: b.ai_probability, contrib: b.ai_contribution, note: f.dependency.vulnerable_functions_called?.length ? 'vulnerable fn called' : f.dependency.usage_status, color: '#B4FF39' }
+      : { label: 'AI probability', weight: '20%', value: b.ai_probability, contrib: b.ai_contribution, note: pct(f.vulnerability_probability), color: '#B4FF39' },
   ]
   return (
     <Card className="p-6" data-tour="score">
@@ -58,16 +62,16 @@ export default function FindingDetail() {
       <Link to={`/scans/${scanId}`} className="inline-flex items-center gap-2 text-sm text-fog-400 hover:text-lime"><ArrowLeft size={15} /> Back to findings</Link>
 
       <header data-tour="finding-header" className="mt-6 animate-fade-up">
-        <Label>{f.cwe} · {cweName(f.cwe)}</Label>
+        <Label>{f.dependency ? `npm dependency · ${f.dependency.advisories?.[0]?.cve || f.cwe}` : `${f.cwe} · ${cweName(f.cwe)}`}</Label>
         <h1 className="mt-4 max-w-4xl font-display text-4xl font-light leading-tight tracking-tight text-fog-50 md:text-5xl">
-          {f.title || cweName(f.cwe)} <span className="text-fade">in {prettyFn(f.function_name)}</span>
+          {f.title || cweName(f.cwe)} {!f.dependency && <span className="text-fade">in {prettyFn(f.function_name)}</span>}
         </h1>
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <RiskBadge category={f.risk_category} />
           <ReachBadge status={f.reachability_status} />
           <TaintBadge taint={f.taint} />
           <Pill>{SEVERITY_LABEL[f.severity] || f.severity} severity</Pill>
-          <Pill>{f.detector === 'ai-model' ? 'AI model' : f.detector === 'semgrep' ? 'Semgrep' : 'Taint engine'}</Pill>
+          <Pill>{f.detector === 'ai-model' ? 'AI model' : f.detector === 'semgrep' ? 'Semgrep' : f.detector === 'osv.dev' ? 'OSV dependency check' : 'Taint engine'}</Pill>
           <span className="font-mono text-xs text-fog-500">{f.file_path}:{f.line}</span>
         </div>
         <p className="mt-5 max-w-3xl text-[15px] leading-relaxed text-fog-300">{f.rule_message}</p>
@@ -80,7 +84,10 @@ export default function FindingDetail() {
         </div>
       )}
 
-      <section className="mt-10">
+      {f.attack && <section className="mt-10"><AttackSimulator attack={f.attack} /></section>}
+      {f.dependency && <section className="mt-10"><DependencyPanel dep={f.dependency} /></section>}
+
+      <section className="mt-6">
         <Card data-tour="attack-path" className="relative overflow-hidden p-6 md:p-8">
           <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-risk-critical/10 blur-3xl" />
           <div className="flex flex-wrap items-center gap-3 text-fog-50">
@@ -110,28 +117,34 @@ export default function FindingDetail() {
 
       <section className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <div className="min-w-0" data-tour="code">
-          <CodeView code={f.source_code} startLine={f.start_line || 1} highlightLines={f.related_lines?.length ? f.related_lines : [f.line]} file={`${f.file_path} · ${prettyFn(f.function_name)}`} />
-          {f.snippet && <div className="mt-3 font-mono text-xs text-fog-500">sink: <span className="text-[#ff8a95]">{f.sink || f.snippet}</span></div>}
+          {f.dependency ? (
+            <Card className="p-6">
+              <Label>Where it is declared</Label>
+              <pre className="mt-4 overflow-x-auto rounded-xl bg-ink-950/70 p-4 font-mono text-sm text-fog-200"><span className="mr-3 text-fog-600">{f.line}</span>{f.snippet}</pre>
+              <div className="mt-2 font-mono text-xs text-fog-500">{f.file_path}</div>
+            </Card>
+          ) : <CodeView code={f.source_code} startLine={f.start_line || 1} highlightLines={f.related_lines?.length ? f.related_lines : [f.line]} file={`${f.file_path} · ${prettyFn(f.function_name)}`} />}
+          {f.snippet && !f.dependency && <div className="mt-3 font-mono text-xs text-fog-500">sink: <span className="text-[#ff8a95]">{f.sink || f.snippet}</span></div>}
         </div>
         <div className="flex flex-col gap-6">
           <Breakdown f={f} />
           <Card className="p-6" data-tour="fix">
             <div className="flex items-center gap-2"><Lightbulb size={16} className="text-lime" /><Label>How to fix</Label></div>
-            <p className="mt-4 text-sm leading-relaxed text-fog-300">{info ? info.fix : 'Review the function manually: the AI model considers it likely vulnerable but no specific rule identified the flaw.'}</p>
+            <p className="mt-4 text-sm leading-relaxed text-fog-300">{f.dependency ? (f.dependency.fix_version ? `Upgrade ${f.dependency.package} to ${f.dependency.fix_version} or later (npm install ${f.dependency.package}@${f.dependency.fix_version}), run your tests, and re-scan. If you cannot upgrade yet, make sure no user input reaches the affected function.` : `No fixed version is published yet. Avoid passing user input to ${f.dependency.package}, or replace the package.`) : info ? info.fix : 'Review the function manually: the AI model considers it likely vulnerable but no specific rule identified the flaw.'}</p>
             {f.cwe && f.cwe !== 'CWE-Unknown' && (
               <a className="mt-4 inline-block text-xs text-lime hover:underline" href={`https://cwe.mitre.org/data/definitions/${f.cwe.replace('CWE-', '')}.html`} target="_blank" rel="noreferrer">
                 Read {f.cwe} on cwe.mitre.org →
               </a>
             )}
           </Card>
-          <Card className="p-6">
+          {!f.dependency && <Card className="p-6">
             <div className="flex items-center gap-2"><BrainCircuit size={16} className="text-lime" /><Label>AI signal</Label><InfoHint title="AI signal" learn="ai-model" align="right">How likely the machine-learning model thinks this function is vulnerable. It is one input (20%) to the score.</InfoHint></div>
             <div className="mt-4 flex items-baseline gap-3">
               <span className="font-display text-4xl font-light text-fog-50">{pct(f.vulnerability_probability)}</span>
               <span className="text-xs text-fog-500">{f.model_used}</span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-fog-500">Function-level probability from the classifier trained on 21,896 labeled JavaScript functions (JsVul). It contributes 20% of the score.</p>
-          </Card>
+          </Card>}
           <Link to={`/scans/${scanId}/graph?focus=${encodeURIComponent(f.function_id || '')}`} className="btn-ghost"><Network size={15} /> Show in call graph</Link>
         </div>
       </section>

@@ -12,6 +12,7 @@ from fastapi.responses import Response
 from app.core.orchestrator import run_scan
 from app.schemas.models import ScanOut, ScanStartRequest
 from app.services import exporters
+from app.services.compare import compare_scans
 from app.services import persistence as db
 
 router = APIRouter(prefix="/api/scans", tags=["scans"])
@@ -22,7 +23,7 @@ def start_scan(payload: ScanStartRequest, background_tasks: BackgroundTasks):
     project = db.get_project(payload.project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    scan = db.create_scan(str(uuid.uuid4()), project["project_id"], project["name"])
+    scan = db.create_scan(str(uuid.uuid4()), project["project_id"], project["name"], project.get("source_ref"))
     background_tasks.add_task(run_scan, scan["scan_id"], project["project_id"], payload.entry_points)
     return ScanOut(**scan)
 
@@ -49,6 +50,32 @@ def delete_scan(scan_id: str):
         raise HTTPException(status_code=409, detail="Scan is still running")
     db.delete_scan(scan_id)
     return {"deleted": scan_id}
+
+
+@router.get("/{scan_id}/previous")
+def previous_scan(scan_id: str):
+    """The latest completed scan of the same project that is older than this one (for Compare)."""
+    s = db.get_scan(scan_id)
+    if not s:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    for other in db.list_scans(s["project_id"], 500):
+        if other["scan_id"] != scan_id and other["status"] == "completed" and other["created_at"] < s["created_at"]:
+            return ScanOut(**other)
+    return None
+
+
+@router.get("/{base_id}/compare/{head_id}")
+def compare(base_id: str, head_id: str):
+    """Fixed / new / still-open findings and call-graph changes between two completed scans."""
+    if base_id == head_id:
+        raise HTTPException(status_code=400, detail="Pick two different scans")
+    for sid in (base_id, head_id):
+        s = db.get_scan(sid)
+        if not s:
+            raise HTTPException(status_code=404, detail=f"Scan {sid} not found")
+        if s["status"] != "completed":
+            raise HTTPException(status_code=409, detail=f"Scan {sid[:8]} has not completed")
+    return compare_scans(base_id, head_id)
 
 
 @router.get("/{scan_id}/entry-points")

@@ -53,7 +53,7 @@ Details: [ANALYSIS_ENGINE.md](ANALYSIS_ENGINE.md)
 | `pytest.ini` | Test configuration |
 | `app/main.py` | FastAPI app, CORS, routers, start-up hooks, `/health` |
 | `app/config.py` | Environment-driven settings |
-| `app/models/database.py` | SQLite schema v2 and migration |
+| `app/models/database.py` | SQLite schema v3 and migrations |
 | `app/schemas/models.py` | Pydantic models |
 | `app/core/orchestrator.py` | Scan pipeline, `build_findings`, scan summary, graph node enrichment |
 | `app/core/upload_handler.py` | ZIP safety checks and extraction |
@@ -63,8 +63,12 @@ Details: [ANALYSIS_ENGINE.md](ANALYSIS_ENGINE.md)
 | `app/services/persistence.py` | All database reads and writes |
 | `app/services/exporters.py` | JSON / SARIF / CSV reports |
 | `app/services/semgrep_scanner.py` | Optional Semgrep integration |
-| `app/api/routes_projects.py` | Upload, list, get, delete projects |
-| `app/api/routes_scans.py` | Start, list, get, delete scans; entry points; export |
+| `app/services/attack_sim.py` | Attack simulator (request + step-by-step replay) |
+| `app/services/dependency_check.py` | npm dependency check against OSV + call-graph usage |
+| `app/services/github_import.py` | Download a public GitHub repository as a ZIP |
+| `app/services/compare.py` | Compare two scans (findings + call graph diff) |
+| `app/api/routes_projects.py` | Upload, GitHub import, new version, refresh, trend, list, get, delete projects |
+| `app/api/routes_scans.py` | Start, list, get, delete scans; previous scan; compare; entry points; export |
 | `app/api/routes_findings.py` | Finding list (filters, search, sort) and detail (resolved paths) |
 | `app/api/routes_graph.py` | Call graph with focus modes |
 | `app/api/routes_model.py` | Model status and dataset summary |
@@ -73,6 +77,7 @@ Details: [ANALYSIS_ENGINE.md](ANALYSIS_ENGINE.md)
 | `tests/test_api.py` | End-to-end API and pipeline tests on the test apps |
 | `tests/test_upload.py` | Archive safety tests |
 | `tests/test_risk_scorer.py` | Scoring tests |
+| `tests/test_features.py` | GitHub import, new version + compare, attack simulator, dependency check |
 | `tests/conftest.py` | Isolated test database and uploads |
 | `reachprioritizer.db` | *(created at runtime, git-ignored)* |
 
@@ -100,8 +105,8 @@ Details: [AI_MODEL_AND_TRAINING.md](AI_MODEL_AND_TRAINING.md)
 | `vite.config.js` | Dev and preview servers with the `/api` proxy, chunk splitting |
 | `tailwind.config.js`, `postcss.config.js`, `src/styles/globals.css` | Design tokens and component classes |
 | `src/main.jsx`, `src/App.jsx` | Bootstrap, fonts, router, error boundary, tour provider |
-| `src/pages/*.jsx` | Dashboard, NewScan, Scans, ScanResults, FindingDetail, CallGraph, Research, Learn |
-| `src/components/*.jsx` | Layout, UI primitives, AttackPath, CodeView, ParticleField |
+| `src/pages/*.jsx` | Dashboard, NewScan, Scans, ScanResults, FindingDetail, CallGraph, Compare, Research, Learn |
+| `src/components/*.jsx` | Layout, UI primitives, AttackPath, AttackSimulator, DependencyPanel, DiffGraph, CodeView, ParticleField |
 | `src/tour/Tour.jsx`, `src/tour/steps.js` | Guided tour engine and script |
 | `src/lib/api.js`, `src/lib/format.js` | API client and presentation helpers |
 
@@ -114,7 +119,8 @@ Details: [FRONTEND.md](FRONTEND.md)
 | `vulnerable-app/` | 8 vulnerabilities (SQLi, path traversal, command injection, eval, XSS, prototype pollution) |
 | `secure-app/` | The same features implemented securely: must produce zero findings |
 | `mixed-app/` | Reachable and dead modules: demonstrates prioritization |
-| `express-app/` | Realistic Express app: mounted routers, class service, dead router, unused controller, sanitizers, start-up job, hardcoded secret |
+| `express-app/` | Realistic Express app: mounted routers, class service, dead router, unused controller, sanitizers, start-up job, hardcoded secret, an outdated `lodash` called with request data (dependency check demo) |
+| `express-app-v2.zip` | A second version of express-app for the Compare demo: SQL injection and open redirect fixed, lodash upgraded, a new command injection (`GET /api/files/ping`) added |
 | `*/ground-truth.json` | Labels (schema v2) |
 | `*.zip` | Ready-to-upload demo archives (without the ground truth) |
 

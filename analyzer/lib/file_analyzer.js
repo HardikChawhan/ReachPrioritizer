@@ -47,7 +47,10 @@ function analyzeFile(relPath, source) {
 
   const F = {
     relPath,
+    source,
     error: null,
+    mounts: [],                 // app.use('/prefix', router) registrations
+    portHints: [],              // numbers that look like the server port
     recoveredErrors: (ast.errors || []).length,
     lineCount: lines.length,
     functions: [],
@@ -419,7 +422,11 @@ function recordNode(F, node, parent, key, frame, ifTests, anc) {
       }
       detectRouteOrServer(F, node, frame);
       const chain = memberChain(callee);
-      if (chain && chain[chain.length - 1] === 'listen') F.indicators.listen = true;
+      if (chain && chain[chain.length - 1] === 'listen') {
+        F.indicators.listen = true;
+        const pn = portNumber(node.arguments[0]);
+        if (pn) F.portHints.unshift(pn);
+      }
       break;
     }
     case 'ImportExpression': {
@@ -436,6 +443,7 @@ function recordNode(F, node, parent, key, frame, ifTests, anc) {
       break;
     case 'VariableDeclarator':
       frame.decls.push({ node, ifTests });
+      if (node.id.type === 'Identifier' && /port/i.test(node.id.name)) { const pn = portNumber(node.init); if (pn) F.portHints.push(pn); }
       if (node.id.type === 'Identifier' && node.init && node.init.type === 'RegExpLiteral') F.regexVars.set(node.id.name, node.init.pattern);
       if (node.id.type === 'Identifier' && node.init) {
         const init = unwrap(node.init);
@@ -481,10 +489,21 @@ function recordNode(F, node, parent, key, frame, ifTests, anc) {
       break;
     case 'ObjectProperty':
       frame.props.push({ node, ifTests });
+      if (/^port$/i.test(keyName(node.key) || '')) { const pn = portNumber(node.value); if (pn) F.portHints.push(pn); }
       break;
     default:
       break;
   }
+}
+
+/** 3000 / process.env.PORT || 3000 / Number(process.env.PORT) || 8080 -> number */
+function portNumber(n) {
+  n = unwrap(n);
+  if (!n) return null;
+  if (n.type === 'NumericLiteral' && n.value > 0 && n.value < 65536) return n.value;
+  if (n.type === 'StringLiteral' && /^\d{2,5}$/.test(n.value)) return Number(n.value);
+  if (n.type === 'LogicalExpression') return portNumber(n.right) || portNumber(n.left);
+  return null;
 }
 
 function detectRouteOrServer(F, call, frame) {
@@ -524,7 +543,7 @@ function detectRouteOrServer(F, call, frame) {
       if (k === 'url' || k === 'path') url = stringValue(p.value);
       if (k === 'method') method = (stringValue(p.value) || 'ROUTE').toUpperCase();
     }
-    if (handler) F.routes.push({ method, route: url || '<dynamic>', handlers: [handler], registeredIn: frame.id, line });
+    if (handler) F.routes.push({ method, route: url || '<dynamic>', receiver: chain && chain.length > 1 ? chain.slice(0, -1).join('.') : null, handlers: [handler], registeredIn: frame.id, line });
     return;
   }
   if (!ROUTE_METHODS.has(m)) return;
@@ -538,12 +557,23 @@ function detectRouteOrServer(F, call, frame) {
   if (!firstIsPath && m !== 'use') return;
   if (firstIsPath && args.length < 2) return;
   const rest = firstIsPath ? args.slice(1) : args;
+  const receiver = chain && chain.length > 1 ? chain.slice(0, -1).join('.') : null;
+  // app.use('/api/files', fileRoutes) / app.use('/api', require('./routes'))
+  if (m === 'use' && first != null && first.startsWith('/')) {
+    for (const a of rest) {
+      const u = unwrap(a);
+      if (!u) continue;
+      if (isRequireCall(u)) F.mounts.push({ prefix: first, spec: stringValue(u.arguments[0]), receiver, line });
+      else if (u.type === 'Identifier' || isMember(u)) { const c = memberChain(u); if (c) F.mounts.push({ prefix: first, targetChain: c, receiver, line }); }
+    }
+  }
   const handlers = rest.filter((a) => a && (isFunction(a) || a.type === 'Identifier' || isMember(a) || (a.type === 'ArrayExpression')))
     .flatMap((a) => (a.type === 'ArrayExpression' ? a.elements.filter(Boolean) : [a]));
   if (!handlers.length) return;
   F.routes.push({
     method: m === 'use' ? 'USE' : m.toUpperCase(),
     route: first != null ? first : (firstIsPath ? '<dynamic>' : '*'),
+    receiver,
     handlers,
     registeredIn: frame.id,
     line,
@@ -721,8 +751,8 @@ function taintOf(n, ctx, depth = 0) {
       const chain = memberChain(n);
       if (chain && isSanitizedVar(chain.join('.'), ctx)) return EMPTY;
       if (chain && R.isSourceChain(chain)) {
-        // value validated by an enclosing check on the root (e.g. allowlist of req.query.x)
-        return new Set([U]);
+        // 'U' marks user input; the 'S|' label records WHICH input (for the attack simulator)
+        return new Set([U, `S|${R.sourceLabel(chain)}`]);
       }
       const p = propName(n);
       if (p && R.NEUTRAL_PROPS.has(p)) return EMPTY;
@@ -733,7 +763,7 @@ function taintOf(n, ctx, depth = 0) {
     case 'NewExpression': {
       const callee = unwrap(n.callee);
       const chain = memberChain(callee);
-      if (chain && R.isSourceCall(chain)) return new Set([U]);
+      if (chain && R.isSourceCall(chain)) return new Set([U, `S|${R.getterLabel(chain, stringValue((n.arguments || [])[0]))}`]);
       if (chain && R.isSanitizer(chain, ctx.category)) return EMPTY;
       let s = EMPTY;
       if (isMember(callee)) {
@@ -789,6 +819,17 @@ function taintOf(n, ctx, depth = 0) {
 function assignPattern(T, pattern, origins) {
   let changed = false;
   if (!origins || origins.size === 0) return false;
+  // const { file, page } = req.query  ->  'S|query' becomes 'S|query.file' / 'S|query.page'
+  if (pattern && pattern.type === 'ObjectPattern' && [...origins].some((o) => o.startsWith('S|') && !o.includes('.'))) {
+    for (const p of pattern.properties) {
+      if (p.type !== 'ObjectProperty') { if (assignPattern(T, p.argument || p, origins)) changed = true; continue; }
+      const k = keyName(p.key);
+      const refined = new Set([...origins].map((o) => (o.startsWith('S|') && !o.includes('.') && k ? `${o}.${k}` : o)));
+      const target = p.value && p.value.type === 'AssignmentPattern' ? p.value.left : p.value;
+      if (assignPattern(T, target, refined)) changed = true;
+    }
+    return changed;
+  }
   for (const name of patternNames(pattern)) {
     const prev = T.get(name);
     const next = union(prev || EMPTY, origins);
@@ -862,6 +903,15 @@ function analyzeFrame(F, frame, lines) {
       callbackChains: [],
       inlineFns: [],
     };
+    // calls into npm packages (dependency reachability)
+    if (rec.chain) {
+      const b = F.bindings.get(rec.chain[0]);
+      if (b && !b.local && !b.aliasChain && b.module) {
+        rec.external = b.module;
+        rec.api = canonicalName(F, rec.chain);
+        rec.userArg = rec.argOrigins.some((o) => o.includes(U));
+      }
+    }
     for (const a of node.arguments || []) {
       if (isFunction(a)) rec.inlineFns.push(F.nodeToId.get(a));
       else {
@@ -890,7 +940,7 @@ function addFinding(F, frame, lines, node, rule, origins, extra = {}) {
   if (origins && origins.size) {
     if (origins.has(U)) taint = 'user_input';
     else taint = 'parameter';
-    for (const o of origins) if (o !== U) params.push(o);
+    for (const o of origins) if (o !== U && !o.startsWith('S|')) params.push(o);
   }
   F.findings.push({
     rule_id: rule.rule_id,
@@ -905,8 +955,10 @@ function addFinding(F, frame, lines, node, rule, origins, extra = {}) {
     function_name: frame.name,
     snippet: snippetAt(lines, line),
     taint,
-    origins: origins ? [...origins] : [],
+    origins: origins ? [...origins].filter((o) => !o.startsWith('S|')) : [],
+    sources: origins ? [...origins].filter((o) => o.startsWith('S|')).map((o) => o.slice(2)) : [],
     sink: extra.sink || null,
+    template: extra.template || null,
     message: extra.message || rule.title,
   });
 }
@@ -914,6 +966,7 @@ function addFinding(F, frame, lines, node, rule, origins, extra = {}) {
 function describeOrigins(frame, origins) {
   if (origins.has(U)) return 'user-controlled input';
   for (const o of origins) {
+    if (o.startsWith('S|')) continue;
     const [, fid, idx] = o.split('|');
     if (fid === frame.id) {
       const names = frame.paramNames[Number(idx)] || [];
@@ -954,6 +1007,64 @@ function isHtmlOrConcat(n) {
     return R.HTML_TEXT.test(staticAndDynamic(n).text);
   }
   return false;
+}
+
+// ---------------------------------------------------------------------------
+// Sink templates (attack simulator): the dangerous value with the attacker's
+// part marked as {{INPUT}}, e.g.  SELECT * FROM users WHERE id = '{{INPUT}}'
+// ---------------------------------------------------------------------------
+function codeOf(F, n) {
+  if (!n || n.start == null) return '?';
+  const t = F.source.slice(n.start, n.end).replace(/\s+/g, ' ');
+  return t.length > 48 ? `${t.slice(0, 45)}...` : t;
+}
+
+function renderTemplate(F, n, ctx, depth = 0) {
+  n = unwrap(n);
+  if (!n || depth > 4) return null;
+  const part = (p) => {
+    p = unwrap(p);
+    const s = stringValue(p);
+    if (s != null) return s;
+    if (p && (p.type === 'TemplateLiteral' || p.type === 'Identifier' || isCall(p))) {
+      const r = renderTemplate(F, p, ctx, depth + 1);
+      if (r) return r;
+    }
+    return taintOf(p, ctx).size ? '{{INPUT}}' : `\${${codeOf(F, p)}}`;
+  };
+  let out;
+  if (n.type === 'Identifier') {
+    // follow `const sql = `...${term}...`` to the value that is actually used
+    let best = null;
+    for (const { node: d } of ctx.frame.decls || []) {
+      if (d.id.type === 'Identifier' && d.id.name === n.name && d.init && d.start < ctx.pos && (!best || d.start > best.start)) best = d;
+    }
+    if (best) { const r = renderTemplate(F, best.init, ctx, depth + 1); if (r) return r; }
+    return taintOf(n, ctx).size ? '{{INPUT}}' : null;
+  }
+  if (isCall(n)) {
+    const c = memberChain(unwrap(n.callee));
+    const last = c ? c[c.length - 1] : null;
+    if (last === 'join' || last === 'resolve') {
+      // path.join(base, input) -> ${base}/{{INPUT}}
+      out = (n.arguments || []).map(part).join('/');
+      return out.includes('{{INPUT}}') ? out : null;
+    }
+    return taintOf(n, ctx).size ? '{{INPUT}}' : null;
+  }
+  if (n.type === 'TemplateLiteral') {
+    out = '';
+    n.quasis.forEach((q, i) => {
+      out += q.value.cooked || '';
+      if (i < n.expressions.length) out += part(n.expressions[i]);
+    });
+  } else if (n.type === 'BinaryExpression' && n.operator === '+') {
+    out = flattenPlus(n, []).map(part).join('');
+  } else {
+    out = taintOf(n, ctx).size ? '{{INPUT}}' : null;
+  }
+  if (out && out.length > 400) out = `${out.slice(0, 397)}...`;
+  return out && out.includes('{{INPUT}}') ? out : null;
 }
 
 function runRules(F, frame, lines) {
@@ -1025,8 +1136,16 @@ function runRules(F, frame, lines) {
     }
     if (sink.requireUserOrHtml && !origins.has(U) && !isHtmlOrConcat(node.arguments[0])) continue;
     const apiName = canonical || chain.join('.');
+    let template = null;
+    for (const i of idxs) {
+      const a = node.arguments[i];
+      if (!a || isFunction(a)) continue;
+      template = renderTemplate(F, a.type === 'SpreadElement' ? a.argument : a, ctx);
+      if (template) break;
+    }
     addFinding(F, frame, lines, node, sink, origins, {
       sink: apiName,
+      template,
       message: `${describeOrigins(frame, origins)} flows into ${apiName}() — ${sink.title}`,
     });
   }
@@ -1042,7 +1161,7 @@ function runRules(F, frame, lines) {
     const ctx = makeCtx(frame, node.start, ifTests, 'xss');
     if (prop === 'innerHTML' || prop === 'outerHTML') {
       const o = taintOf(node.right, ctx);
-      if (o.size) addFinding(F, frame, lines, node, { rule_id: 'rp.xss.inner-html', cwe: 'CWE-79', title: `DOM cross-site scripting (${prop})`, severity: 'high', category: 'xss' }, o, { sink: prop, message: `${describeOrigins(frame, o)} is written to ${prop}` });
+      if (o.size) addFinding(F, frame, lines, node, { rule_id: 'rp.xss.inner-html', cwe: 'CWE-79', title: `DOM cross-site scripting (${prop})`, severity: 'high', category: 'xss' }, o, { sink: prop, template: renderTemplate(F, node.right, ctx), message: `${describeOrigins(frame, o)} is written to ${prop}` });
       continue;
     }
     if (prop) checkSecret(F, frame, lines, node, prop, node.right);
@@ -1103,6 +1222,7 @@ function runRules(F, frame, lines) {
       if (o.size) {
         addFinding(F, frame, lines, node, { rule_id: 'rp.sqli.string-build', cwe: 'CWE-89', title: 'SQL injection (query built by string concatenation)', severity: 'high', category: 'sqli' }, o, {
           sink: 'SQL string',
+          template: renderTemplate(F, node, ctx),
           message: `${describeOrigins(frame, o)} is concatenated into a SQL statement — use parameterized queries`,
         });
       }
@@ -1113,6 +1233,7 @@ function runRules(F, frame, lines) {
       if (o.size) {
         addFinding(F, frame, lines, node, { rule_id: 'rp.xss.html-build', cwe: 'CWE-79', title: 'Cross-site scripting (HTML built from unescaped input)', severity: 'medium', category: 'xss' }, o, {
           sink: 'HTML string',
+          template: renderTemplate(F, node, ctx),
           message: `${describeOrigins(frame, o)} is inserted into HTML without escaping`,
         });
       }

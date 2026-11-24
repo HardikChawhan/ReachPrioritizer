@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
-  ArrowUpRight, Check, ChevronRight, Crosshair, Download, Filter, GitBranch, Network, Radar, RefreshCw,
-  Search, ShieldAlert, Timer, Waypoints,
+  ArrowUpRight, Check, ChevronRight, Crosshair, Download, Filter, GitBranch, GitCompareArrows, Github, Network, Package, Radar, RefreshCw,
+  Search, ShieldAlert, Swords, Timer, UploadCloud, Waypoints,
 } from 'lucide-react'
 import {
   Card, EmptyState, ErrorState, InfoHint, Label, PageHeader, Pill, ProgressBar, ReachBadge, RiskBadge, RiskRing,
@@ -17,6 +17,7 @@ const PIPELINE = [
   { at: 20, label: 'Parse & call graph' },
   { at: 55, label: 'AI scoring' },
   { at: 82, label: 'Prioritize' },
+  { at: 86, label: 'Dependencies' },
   { at: 92, label: 'Save' },
 ]
 
@@ -33,7 +34,7 @@ function Running({ scan }) {
         <div className="font-display text-2xl font-light text-fog-50">{scan.stage || 'Queued'}…</div>
         <div className="mt-2 text-sm text-fog-400">This usually takes a few seconds. The page updates automatically.</div>
         <ProgressBar value={scan.progress} className="mt-8 max-w-xl" />
-        <div className="mt-6 grid w-full max-w-2xl grid-cols-5 gap-2">
+        <div className="mt-6 grid w-full max-w-2xl grid-cols-6 gap-2">
           {PIPELINE.map((p, i) => {
             const done = scan.progress > (PIPELINE[i + 1]?.at ?? 99)
             const active = !done && scan.progress >= p.at
@@ -56,6 +57,7 @@ const CHIP_GROUPS = [
   { key: 'category', label: 'Risk', options: RISK_ORDER.map((c) => [c, c]) },
   { key: 'reachability', label: 'Reach', options: [['reachable', 'Reachable'], ['startup_only', 'Startup only'], ['unreachable', 'Dead code']] },
   { key: 'taint', label: 'Data flow', options: [['user_input', 'User input'], ['parameter', 'Parameter'], ['none', 'None'], ['unknown', 'AI only']] },
+  { key: 'finding_type', label: 'Type', options: [['static_finding', 'Code'], ['dependency', 'Dependency'], ['ai_prediction', 'AI']] },
 ]
 
 function FindingRow({ f, rank, scanId }) {
@@ -68,9 +70,13 @@ function FindingRow({ f, rank, scanId }) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="truncate font-medium text-fog-50">{f.title || cweName(f.cwe)}</span>
             <span className="font-mono text-[11px] text-fog-500">{f.cwe}</span>
+            {f.attack?.verdict === 'exploitable' && <Pill tone="danger" title="An attack request was generated for this finding"><Swords size={11} /> attack ready</Pill>}
+            {f.dependency && <Pill tone="muted" title="Known vulnerability in an npm package (OSV database)"><Package size={11} /> dependency</Pill>}
           </div>
           <div className="mt-1 truncate font-mono text-xs text-fog-400">
-            <span className="text-fog-200">{prettyFn(f.function_name)}</span> · {f.file_path}:{f.line}
+            {f.dependency
+              ? <><span className="text-fog-200">{f.dependency.package}@{f.dependency.version}</span>{f.dependency.fix_version && <> → <span className="text-lime">{f.dependency.fix_version}</span></>} · {f.dependency.usage_status === 'called' ? `used in ${prettyFn(f.function_name)}` : f.dependency.usage_status === 'imported' ? 'imported only' : 'never imported'}</>
+              : <><span className="text-fog-200">{prettyFn(f.function_name)}</span> · {f.file_path}:{f.line}</>}
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5 md:hidden">
             <ReachBadge status={f.reachability_status} /><TaintBadge taint={f.taint} />
@@ -128,16 +134,47 @@ function EntryPoints({ scanId }) {
   )
 }
 
+function ExtrasStrip({ sum, onFilter }) {
+  const dep = sum.dependencies || {}
+  const depText = dep.status === 'ok'
+    ? `${dep.vulnerable_packages} of ${dep.checked} packages have known vulnerabilities · ${dep.reachable} called from reachable code`
+    : dep.status === 'offline' ? 'Could not reach osv.dev — dependency check skipped (no internet?)'
+      : dep.status === 'no_manifest' ? 'No package.json in this project' : 'Dependency check disabled'
+  return (
+    <section className="mt-4 grid gap-4 md:grid-cols-2">
+      <button type="button" onClick={() => onFilter('taint', 'user_input')} data-tour="attack-strip"
+        className="group flex items-center gap-4 rounded-2xl border border-risk-critical/20 bg-risk-critical/[0.04] px-5 py-4 text-left transition hover:border-risk-critical/40">
+        <span className="rounded-xl border border-risk-critical/30 bg-risk-critical/10 p-2.5 text-[#ff8a95]"><Swords size={18} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-lg text-fog-50">{sum.attack_simulations ?? 0} attack simulation{sum.attack_simulations === 1 ? '' : 's'} ready</span>
+          <span className="block text-xs text-fog-400">Open a finding to see the exact request an attacker would send — simulated, never sent.</span>
+        </span>
+        <ChevronRight size={16} className="text-fog-600 group-hover:text-fog-300" />
+      </button>
+      <button type="button" onClick={() => onFilter('finding_type', 'dependency')} data-tour="deps-strip"
+        className="group flex items-center gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-5 py-4 text-left transition hover:border-lime/30">
+        <span className="rounded-xl border border-lime/25 bg-lime/[0.07] p-2.5 text-lime"><Package size={18} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-lg text-fog-50">Dependencies {dep.status === 'ok' ? <span className={dep.vulnerable_packages ? 'text-risk-high' : 'text-lime'}>· {dep.vulnerable_packages} vulnerable</span> : null}</span>
+          <span className="block text-xs text-fog-400">{depText}</span>
+        </span>
+        <ChevronRight size={16} className="text-fog-600 group-hover:text-fog-300" />
+      </button>
+    </section>
+  )
+}
+
 export default function ScanResults() {
   const { scanId } = useParams()
   const navigate = useNavigate()
   const scan = useAsync(() => api.scan(scanId), [scanId], { poll: 1000, until: (s) => !['queued', 'running'].includes(s.status) })
   const done = scan.data?.status === 'completed'
-  const [filters, setFilters] = useState({ category: [], reachability: [], taint: [] })
+  const [filters, setFilters] = useState({ category: [], reachability: [], taint: [], finding_type: [] })
   const [params] = useSearchParams()
   const [q, setQ] = useState(params.get('q') || '')
   const [sort, setSort] = useState('risk')
   const findings = useAsync(() => (done ? api.findings(scanId, { sort }) : Promise.resolve([])), [scanId, done, sort])
+  const previous = useAsync(() => (done ? api.previousScan(scanId) : Promise.resolve(null)), [scanId, done])
 
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -145,11 +182,12 @@ export default function ScanResults() {
       (!filters.category.length || filters.category.includes(f.risk_category)) &&
       (!filters.reachability.length || filters.reachability.includes(f.reachability_status)) &&
       (!filters.taint.length || filters.taint.includes(f.taint)) &&
+      (!filters.finding_type.length || filters.finding_type.includes(f.finding_type)) &&
       (!needle || [f.file_path, f.function_name, f.cwe, f.title, f.rule_message].some((v) => (v || '').toLowerCase().includes(needle))))
   }, [findings.data, filters, q])
 
   const toggle = (key, val) => setFilters((f) => ({ ...f, [key]: f[key].includes(val) ? f[key].filter((x) => x !== val) : [...f[key], val] }))
-  const activeFilters = filters.category.length + filters.reachability.length + filters.taint.length + (q ? 1 : 0)
+  const activeFilters = filters.category.length + filters.reachability.length + filters.taint.length + filters.finding_type.length + (q ? 1 : 0)
 
   if (scan.error && !scan.data) return <ErrorState error={scan.error} onRetry={scan.reload} />
   if (!scan.data) return <div className="space-y-4"><Skeleton className="h-24" /><Skeleton className="h-64" /></div>
@@ -167,11 +205,13 @@ export default function ScanResults() {
         <span data-tour="scan-actions" className="flex flex-wrap items-center gap-3">
         <StatusDot status={s.status} />
         {done && <Link to={`/scans/${scanId}/graph`} className="btn-ghost"><Network size={15} /> Call graph</Link>}
+        {done && previous.data && <Link to={`/compare?base=${previous.data.scan_id}&head=${scanId}`} className="btn-ghost" data-tour="compare-btn"><GitCompareArrows size={15} /> Compare with previous</Link>}
         {done && <ExportMenu scanId={scanId} />}
+        {done && <Link to={`/scan/new?project=${s.project_id}`} className="btn-ghost" title="Scan an updated version of this project, then compare">{s.source_ref && /@|default branch/.test(s.source_ref) ? <Github size={15} /> : <UploadCloud size={15} />} New version</Link>}
         {['completed', 'failed'].includes(s.status) && <button className="btn-ghost" onClick={rescan}><RefreshCw size={15} /> Rescan</button>}
         </span>
       </PageHeader>
-      <div className="mt-3 text-xs text-fog-500">Started {timeAgo(s.created_at)}{done && <> · {duration(s.duration_ms)} · model {sum.model?.display_name} · mode {s.analysis_mode}</>}</div>
+      <div className="mt-3 text-xs text-fog-500">{s.source_ref && <span className="mr-1 font-mono text-fog-400">{s.source_ref} ·</span>}Started {timeAgo(s.created_at)}{done && <> · {duration(s.duration_ms)} · model {sum.model?.display_name} · mode {s.analysis_mode}</>}</div>
 
       <div className="mt-10">
         {['queued', 'running'].includes(s.status) && <Running scan={s} />}
@@ -190,6 +230,8 @@ export default function ScanResults() {
             <StatTile label="Deprioritized" value={`${sum.noise_reduction_pct ?? 0}%`} sub={`${sum.deprioritized ?? 0} in dead / startup-only code`} icon={Radar} accent />
             <StatTile label="Code analyzed" value={sum.functions ?? 0} sub={`functions · ${sum.files_analyzed} files · ${sum.edges} call edges`} icon={GitBranch} />
           </section>
+
+          <ExtrasStrip sum={sum} onFilter={(key, val) => setFilters((f) => ({ ...f, [key]: [val] }))} />
 
           <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1.7fr_1fr]">
             <Card className="p-6" data-tour="risk-dist">
@@ -241,7 +283,7 @@ export default function ScanResults() {
                   ))}
                 </div>
               ))}
-              {activeFilters > 0 && <button className="text-xs text-lime hover:underline" onClick={() => { setFilters({ category: [], reachability: [], taint: [] }); setQ('') }}>Clear ({activeFilters})</button>}
+              {activeFilters > 0 && <button className="text-xs text-lime hover:underline" onClick={() => { setFilters({ category: [], reachability: [], taint: [], finding_type: [] }); setQ('') }}>Clear ({activeFilters})</button>}
             </div>
             <div data-tour="findings" className="mt-6 flex flex-col gap-2.5">
               {findings.loading && !findings.data && [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}

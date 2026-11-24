@@ -14,6 +14,9 @@ class ProjectOut(BaseModel):
     created_at: str
     scan_count: Optional[int] = None
     last_scan_at: Optional[str] = None
+    source_type: Optional[str] = "zip"
+    source_url: Optional[str] = None
+    source_ref: Optional[str] = None
 
 
 class ScanStartRequest(BaseModel):
@@ -37,6 +40,14 @@ class ScanOut(BaseModel):
     created_at: str
     updated_at: str
     completed_at: Optional[str] = None
+    source_ref: Optional[str] = None
+
+
+class GitHubImportRequest(BaseModel):
+    url: str = Field(..., description="Public GitHub repository URL, e.g. https://github.com/OWASP/NodeGoat")
+    branch: Optional[str] = Field(default=None, description="Branch, tag or commit (default branch when empty)")
+    name: Optional[str] = None
+    auto_scan: bool = True
 
 
 class PathStep(BaseModel):
@@ -78,6 +89,8 @@ class FindingOut(BaseModel):
     risk_breakdown: Optional[Dict[str, Any]] = None
     finding_type: Optional[str] = None
     detector: Optional[str] = None
+    attack: Optional[Dict[str, Any]] = None
+    dependency: Optional[Dict[str, Any]] = None
     created_at: str
 
 

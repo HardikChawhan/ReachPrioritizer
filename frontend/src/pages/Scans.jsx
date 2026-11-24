@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, FolderGit2, Play, Plus, Trash2 } from 'lucide-react'
+import { ArrowRight, FolderGit2, GitCompareArrows, Github, Play, Plus, Trash2, UploadCloud } from 'lucide-react'
 import { Card, EmptyState, ErrorState, Label, PageHeader, RiskBadge, Skeleton, useAsync } from '../components/ui'
 import { StatusDot } from './Dashboard'
 import { api } from '../lib/api'
@@ -40,16 +40,25 @@ export default function Scans() {
             <Card key={p.project_id} hover className="flex flex-col p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="rounded-xl border border-lime/20 bg-lime/[0.06] p-2.5 text-lime"><FolderGit2 size={16} /></div>
+                  <div className="rounded-xl border border-lime/20 bg-lime/[0.06] p-2.5 text-lime">{p.source_type === 'github' ? <Github size={16} /> : <FolderGit2 size={16} />}</div>
                   <div className="min-w-0">
                     <div className="truncate font-display text-lg text-fog-50">{p.name}</div>
-                    <div className="text-xs text-fog-500">{p.file_count} source files · {bytes(p.size_bytes)}</div>
+                    <div className="truncate text-xs text-fog-500">{p.file_count} source files · {bytes(p.size_bytes)}{p.source_ref ? ` · ${p.source_ref}` : ''}</div>
                   </div>
                 </div>
                 <button onClick={() => removeProject(p)} className="rounded-lg p-1.5 text-fog-500 hover:bg-risk-critical/10 hover:text-risk-critical" title="Delete project"><Trash2 size={15} /></button>
               </div>
               <div className="mt-4 text-xs text-fog-500">{p.scan_count} scan{p.scan_count === 1 ? '' : 's'} · last {timeAgo(p.last_scan_at || p.created_at)}</div>
-              <button className="btn-ghost mt-4 w-full" disabled={busy === p.project_id} onClick={() => rescan(p.project_id)}><Play size={14} /> {busy === p.project_id ? 'Starting…' : 'Run new scan'}</button>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button className="btn-ghost w-full" disabled={busy === p.project_id} onClick={() => rescan(p.project_id)}><Play size={14} /> {busy === p.project_id ? 'Starting…' : 'Rescan'}</button>
+                <Link className="btn-ghost w-full" to={`/scan/new?project=${p.project_id}`} title="Scan an updated version of the code">{p.source_type === 'github' ? <Github size={14} /> : <UploadCloud size={14} />} New version</Link>
+              </div>
+              {(() => {
+                const done = (scans.data || []).filter((x) => x.project_id === p.project_id && x.status === 'completed')
+                return done.length >= 2 ? (
+                  <Link className="btn-ghost mt-2 w-full" to={`/compare?base=${done[1].scan_id}&head=${done[0].scan_id}`}><GitCompareArrows size={14} /> Compare last two scans</Link>
+                ) : null
+              })()}
             </Card>
           ))}
         </div>

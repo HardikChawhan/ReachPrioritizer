@@ -86,15 +86,25 @@ The website itself has a **guided tour** (the "Tour" button at the top) and a **
 | Page | What you see / do |
 |---|---|
 | **Overview** | Dashboard: number of projects and scans, how many findings are *actionable* (reachable + proven user input), the risk mix and the most common vulnerability types. |
-| **New scan** | Drag and drop a `.zip` of a project. The scan starts automatically and usually takes a few seconds. |
+| **New scan** | Drag and drop a `.zip` of a project, **or paste a GitHub link**. The scan starts automatically and usually takes a few seconds. |
 | **Scan results** | Summary numbers, risk distribution, the list of detected routes ("attack surface"), and the **ranked list of findings** with filters. Export as JSON, SARIF (for GitHub) or CSV. |
-| **Finding detail** | One vulnerability in depth: attack path, data flow, highlighted code, why it got its score, how to fix it. |
+| **Finding detail** | One vulnerability in depth: the **attack simulator** (the exact request a hacker would send, replayed step by step), attack path, data flow, highlighted code, why it got its score, how to fix it. |
 | **Call graph** | An interactive map of the program. Red dots are vulnerable functions an attacker can reach. Click a dot to light up the path from a door to it. |
-| **Scans** | History of all projects and scans; run again or delete. |
+| **Scans** | History of all projects and scans; run again, scan a new version, compare, or delete. |
+| **Compare** | Two scans of the same project side by side: what was **fixed**, what is **new**, what is **still open**, and both call graphs next to each other. |
 | **Model & Research** | Which AI model is active, how good it is, the training data, and our evaluation results. |
 | **Learn** | Built-in guide: every concept, a risk-score calculator, vulnerability types, FAQ, glossary. |
 
 ![Guided tour](images/guided-tour.jpg)
+
+### New features (v2.1), in simple words
+
+| Feature | What it does | Why it matters |
+|---|---|---|
+| **Scan from a GitHub link** | Paste `https://github.com/owner/repo`; we download the code and scan it. | No need to zip anything. Great for scanning famous vulnerable apps live in a demo. |
+| **Attack simulator** | For each real bug, we write the exact request a hacker would send (for example `GET /api/files/download?file=../../../../etc/passwd`) and play the attack step by step until it hits the dangerous line. The last step shows what the server would actually run, e.g. `SELECT * FROM users WHERE name LIKE '%' OR '1'='1' -- %'`. | Turns "this might be a bug" into "here is how it is attacked". We never send the request; it is a simulation, so it is safe. |
+| **Dependency check** | We read the npm packages in `package.json`, look them up in OSV (Google's database of known bugs, CVEs), then use our call graph to check whether the code really calls that package from a route, with user input. | Other tools flag every old package. We say which ones an attacker can actually reach, the same idea as the rest of the project. |
+| **Compare scans** | Scan, fix, scan again, then press **Compare**: fixed / new / still-open lists, both call graphs side by side, and a trend chart. | Shows progress over time and proves that a fix really removed the attack path. |
 
 ---
 
@@ -118,7 +128,7 @@ The website itself has a **guided tour** (the "Tour" button at the top) and a **
 - We used **JsVul**, a public dataset of **21,896 JavaScript functions** taken from real security fixes on GitHub (1,164 projects). About 9% of them are vulnerable, the rest are normal code.
 - We split it into **train / validation / test** sets *by project*, so the model is tested on projects it has never seen. This prevents cheating.
 - The default model (TF-IDF + Logistic Regression) finds **74% of the vulnerable functions** in the test set, but it also raises many false alarms (precision 28%). That's why the AI is only **one ingredient** of the score, and the concrete findings come from the rule-based taint engine.
-- We also trained a neural network (**CodeBERT**) on an RTX 4060 laptop GPU (22 minutes). It did better on the validation data, but slightly **worse** on the final test set of unseen projects (F1 0.35 vs 0.40). The app always uses the model with the better test score, so it automatically kept TF-IDF. This is an honest research finding: a bigger model is not automatically better on new projects.
+- A stronger model (CodeBERT) can be trained on a GPU. The app automatically switches to it if it scores better.
 
 ---
 
@@ -182,10 +192,12 @@ A file-by-file explanation is in [`REPOSITORY_GUIDE.md`](REPOSITORY_GUIDE.md).
 1. Overview page: explain the problem (alert fatigue) using the "Actionable" vs "Deprioritized" numbers.
 2. Upload `express-app.zip`. Show the live progress.
 3. Scan results: the top items are reachable and have proven user input. Point at the dead-code item (`adminEval`) sitting at the bottom despite being "critical".
-4. Open the #1 finding: walk through the attack path, data flow, code and score breakdown.
+4. Open the #1 finding: press **Replay attack** in the attack simulator, then walk through the attack path, data flow, code and score breakdown.
+   Open the `lodash` dependency finding: an old package that is really called with user input from a live route.
 5. Call graph: click the red dot and watch the path light up.
-6. Model & Research: show the comparison with the other tools.
-7. Learn page: play with the risk calculator.
+6. **Compare:** click "New version", upload `test-applications/express-app-v2.zip` (SQL injection and open redirect fixed, one new command injection added), then "Compare with previous". Show fixed vs new and the two call graphs side by side.
+7. Model & Research: show the comparison with the other tools.
+8. Learn page: play with the risk calculator.
 
 ---
 

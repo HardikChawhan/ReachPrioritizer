@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from app.models.database import get_connection
 
 JSON_FIELDS_FINDING = ("call_path", "taint_path", "related_lines", "risk_breakdown", "entry_point")
+EXTRA_KEYS = ("attack", "dependency")
 
 
 def now_iso() -> str:
@@ -31,16 +32,30 @@ def _loads(v: Optional[str], default: Any = None) -> Any:
 # ---------------------------------------------------------------------------
 # Projects
 # ---------------------------------------------------------------------------
-def create_project(project_id: str, name: str, upload_path: str, file_count: int, size_bytes: int) -> Dict:
+def create_project(project_id: str, name: str, upload_path: str, file_count: int, size_bytes: int,
+                   source_type: str = "zip", source_url: Optional[str] = None, source_ref: Optional[str] = None) -> Dict:
     conn = get_connection()
     try:
         ts = now_iso()
         conn.execute(
-            "INSERT INTO projects (project_id, name, upload_path, file_count, size_bytes, created_at) VALUES (?,?,?,?,?,?)",
-            (project_id, name, upload_path, file_count, size_bytes, ts),
+            "INSERT INTO projects (project_id, name, upload_path, file_count, size_bytes, created_at, source_type, source_url, source_ref) "
+            "VALUES (?,?,?,?,?,?,?,?,?)",
+            (project_id, name, upload_path, file_count, size_bytes, ts, source_type, source_url, source_ref),
         )
         conn.commit()
-        return {"project_id": project_id, "name": name, "upload_path": upload_path, "file_count": file_count, "size_bytes": size_bytes, "created_at": ts}
+        return {"project_id": project_id, "name": name, "upload_path": upload_path, "file_count": file_count, "size_bytes": size_bytes,
+                "created_at": ts, "source_type": source_type, "source_url": source_url, "source_ref": source_ref}
+    finally:
+        conn.close()
+
+
+def update_project_source(project_id: str, upload_path: str, file_count: int, size_bytes: int, source_ref: Optional[str] = None) -> None:
+    """A new version of the project's code (new ZIP or a fresh GitHub download)."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE projects SET upload_path=?, file_count=?, size_bytes=?, source_ref=? WHERE project_id=?",
+                     (upload_path, file_count, size_bytes, source_ref, project_id))
+        conn.commit()
     finally:
         conn.close()
 
@@ -89,14 +104,14 @@ def _scan_row(row) -> Dict:
     return d
 
 
-def create_scan(scan_id: str, project_id: str, project_name: str) -> Dict:
+def create_scan(scan_id: str, project_id: str, project_name: str, source_ref: Optional[str] = None) -> Dict:
     conn = get_connection()
     try:
         ts = now_iso()
         conn.execute(
-            "INSERT INTO scans (scan_id, project_id, project_name, status, stage, progress, finding_count, created_at, updated_at) "
-            "VALUES (?, ?, ?, 'queued', 'Queued', 0, 0, ?, ?)",
-            (scan_id, project_id, project_name, ts, ts),
+            "INSERT INTO scans (scan_id, project_id, project_name, status, stage, progress, finding_count, created_at, updated_at, source_ref) "
+            "VALUES (?, ?, ?, 'queued', 'Queued', 0, 0, ?, ?, ?)",
+            (scan_id, project_id, project_name, ts, ts, source_ref),
         )
         conn.commit()
         row = conn.execute("SELECT * FROM scans WHERE scan_id=?", (scan_id,)).fetchone()
@@ -196,8 +211,8 @@ def save_scan_results(scan_id: str, nodes: List[Dict], edges: List[Dict], entry_
             """INSERT INTO findings (finding_id, scan_id, function_id, function_name, file_path, start_line, end_line, line,
                 related_lines, snippet, source_code, prediction, vulnerability_probability, model_used, rule_id, title, rule_message,
                 severity, cwe, category, sink, taint, reachability_status, entry_point, call_path, taint_path, risk_score,
-                risk_category, risk_breakdown, finding_type, detector, created_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                risk_category, risk_breakdown, finding_type, detector, extra_json, created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             [(
                 f.get("finding_id") or str(uuid.uuid4()), scan_id, f.get("function_id"), f.get("function_name"), f.get("file_path", ""),
                 f.get("start_line"), f.get("end_line"), f.get("line"), _dumps(f.get("related_lines")), f.get("snippet"),
@@ -205,7 +220,8 @@ def save_scan_results(scan_id: str, nodes: List[Dict], edges: List[Dict], entry_
                 f.get("rule_id"), f.get("title"), f.get("rule_message"), f.get("severity"), f.get("cwe"), f.get("category"),
                 f.get("sink"), f.get("taint", "none"), f.get("reachability_status", "unknown"), _dumps(f.get("entry_point")),
                 _dumps(f.get("call_path")), _dumps(f.get("taint_path")), f.get("risk_score", 0.0), f.get("risk_category"),
-                _dumps(f.get("risk_breakdown")), f.get("finding_type"), f.get("detector"), ts,
+                _dumps(f.get("risk_breakdown")), f.get("finding_type"), f.get("detector"),
+                _dumps({k: f[k] for k in EXTRA_KEYS if f.get(k) is not None} or None), ts,
             ) for f in findings],
         )
         conn.commit()
@@ -220,6 +236,9 @@ def _finding_row(row, with_source: bool) -> Dict:
     d = dict(row)
     for k in JSON_FIELDS_FINDING:
         d[k] = _loads(d.get(k), [] if k in ("call_path", "taint_path", "related_lines") else None)
+    extra = _loads(d.pop("extra_json", None), None) or {}
+    for k in EXTRA_KEYS:
+        d[k] = extra.get(k)
     if not with_source:
         d.pop("source_code", None)
     return d

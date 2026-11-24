@@ -45,6 +45,8 @@ MAX_FILES_IN_ZIP = _env_int("RP_MAX_FILES_IN_ZIP", 20000)
 MAX_UNCOMPRESSED_SIZE = _env_int("RP_MAX_UNCOMPRESSED_MB", 500) * 1024 * 1024
 MAX_SINGLE_FILE_SIZE = _env_int("RP_MAX_FILE_MB", 20) * 1024 * 1024
 MAX_COMPRESSION_RATIO = _env_int("RP_MAX_COMPRESSION_RATIO", 200)
+# lockfiles are kept for the dependency check
+ALLOWED_EXTRACT_NAMES = {"yarn.lock"}
 ALLOWED_EXTRACT_EXTENSIONS = {
     ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".mts", ".cts", ".json",
 }

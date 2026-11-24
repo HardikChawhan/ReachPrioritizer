@@ -8,7 +8,7 @@ from app.config import DB_PATH
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS schema_meta (
@@ -22,7 +22,10 @@ CREATE TABLE IF NOT EXISTS projects (
     upload_path  TEXT NOT NULL,
     file_count   INTEGER DEFAULT 0,
     size_bytes   INTEGER DEFAULT 0,
-    created_at   TEXT NOT NULL
+    created_at   TEXT NOT NULL,
+    source_type  TEXT DEFAULT 'zip',
+    source_url   TEXT,
+    source_ref   TEXT
 );
 
 CREATE TABLE IF NOT EXISTS scans (
@@ -41,6 +44,7 @@ CREATE TABLE IF NOT EXISTS scans (
     created_at     TEXT NOT NULL,
     updated_at     TEXT NOT NULL,
     completed_at   TEXT,
+    source_ref     TEXT,
     FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE CASCADE
 );
 
@@ -76,6 +80,7 @@ CREATE TABLE IF NOT EXISTS findings (
     risk_breakdown            TEXT,
     finding_type              TEXT,
     detector                  TEXT,
+    extra_json                TEXT,
     created_at                TEXT NOT NULL,
     FOREIGN KEY (scan_id) REFERENCES scans(scan_id) ON DELETE CASCADE
 );
@@ -151,6 +156,22 @@ def _current_version(conn: sqlite3.Connection) -> int:
     return int(v["value"]) if v else 0
 
 
+# Columns added after v2. Added in place, so existing scans are kept.
+ADDED_COLUMNS = {
+    "projects": [("source_type", "TEXT DEFAULT 'zip'"), ("source_url", "TEXT"), ("source_ref", "TEXT")],
+    "scans": [("source_ref", "TEXT")],
+    "findings": [("extra_json", "TEXT")],
+}
+
+
+def _add_missing_columns(conn: sqlite3.Connection) -> None:
+    for table, cols in ADDED_COLUMNS.items():
+        have = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+        for name, decl in cols:
+            if name not in have:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {decl}")
+
+
 def initialize_db() -> None:
     """Create tables; migrate a v1 (prototype) database by recreating the schema."""
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -158,7 +179,7 @@ def initialize_db() -> None:
     try:
         conn.execute("PRAGMA journal_mode=WAL")
         version = _current_version(conn)
-        if 0 < version < SCHEMA_VERSION:
+        if 0 < version < 2:
             logger.warning(
                 "Database schema v%d is incompatible with v%d; recreating tables "
                 "(old prototype scan data is discarded).",
@@ -169,6 +190,7 @@ def initialize_db() -> None:
                 conn.execute(f"DROP TABLE IF EXISTS {t}")
             conn.execute("PRAGMA foreign_keys=ON")
         conn.executescript(SCHEMA_SQL)
+        _add_missing_columns(conn)
         conn.execute(
             "INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)",
             (str(SCHEMA_VERSION),),
